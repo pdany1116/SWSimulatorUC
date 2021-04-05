@@ -17,6 +17,7 @@ namespace Assembler
             "CLZ", "CLS", "CCC", "SEC", "SEV", "SEZ", "SES", "SCC", "NOP", "RET", "RETI", "HALT", "WAIT", "PUSHPC", "POPPC", "PUSHFLAG",
             "POPFLAG"};
         private Int16 m_bytesFromStart = 0;
+        private int m_lineNumber = 1;
 
         public void ParseAndTransform(string inputFilePath, string outputFilePath)
         {
@@ -30,13 +31,11 @@ namespace Assembler
                 lines[i] = lines[i].ToUpper();
             }
 
-            var lineNumber = 0;
             foreach(string line in lines)
             {
                 char[] delimiters = {',', ' ','\t'};
                 string[] words = line.Split(delimiters);
                 UInt16 instructionCode = 0;
-
                 StringCollection instructions = new StringCollection();
                 instructions.AddRange(m_instructions);
                 if (instructions.Contains(words[0]))
@@ -210,59 +209,81 @@ namespace Assembler
                     {
                         if (words[1].StartsWith("R") && System.Text.RegularExpressions.Regex.IsMatch(words[2], @"^\d+H?$"))
                         {
-                            Int16 operand = ResolveImmediateOperand(words[2]);
-                            mas = 0;
-                            mad = 1;
-                            UInt16 indexDestination = UInt16.Parse(words[1].Substring(1));
+                            if (ResolveImmediateOperand(words[2], out Int16 operand) != false)
+                            {
+                                UInt16 indexDestination = UInt16.Parse(words[1].Substring(1));
+                                if (indexDestination <= 15)
+                                {
+                                    mas = 0;
+                                    mad = 1;
+                                    instructionCode = (UInt16)(instructionCode | indexDestination);
+                                    instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                    instructionCode = (UInt16)(instructionCode | (mas << 10));
 
-                            instructionCode = (UInt16)(instructionCode | indexDestination);
-                            instructionCode = (UInt16)(instructionCode | (mad << 4));
-                            instructionCode = (UInt16)(instructionCode | (mas << 10));
-
-                            AddToOutput(instructionCode, operand);
-                            Console.WriteLine(instructionCode);
-                            Console.WriteLine(operand);
-                            Console.WriteLine();
+                                    AddToOutput(instructionCode, operand);
+                                    Console.WriteLine(instructionCode);
+                                    Console.WriteLine(operand);
+                                    Console.WriteLine();
+                                }
+                                else
+                                {
+                                    ThrowError(m_lineNumber, line, "Invalid register index!");
+                                }
+                            }
+                            else
+                            {
+                                ThrowError(m_lineNumber, line, "Invalid immediate value!");
+                            }
                         }
                         else if (words[1].StartsWith("R") && words[2].StartsWith("R"))
                         {
-                            mas = 1;
-                            mad = 1;
                             UInt16 indexDestination = UInt16.Parse(words[1].Substring(1));
                             UInt16 indexSource = UInt16.Parse(words[2].Substring(1));
+                            if (indexDestination <= 15 && indexSource <= 15)
+                            {
+                                mas = 1;
+                                mad = 1;
 
-                            instructionCode = (UInt16)(instructionCode | indexDestination);
-                            instructionCode = (UInt16)(instructionCode | (indexSource << 6));
-                            instructionCode = (UInt16)(instructionCode | (mad << 4));
-                            instructionCode = (UInt16)(instructionCode | (mas << 10));
+                                instructionCode = (UInt16)(instructionCode | indexDestination);
+                                instructionCode = (UInt16)(instructionCode | (indexSource << 6));
+                                instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                instructionCode = (UInt16)(instructionCode | (mas << 10));
 
-                            AddToOutput(instructionCode);
-                            Console.WriteLine(instructionCode);
-                            Console.WriteLine();
+                                AddToOutput(instructionCode);
+                                Console.WriteLine(instructionCode);
+                                Console.WriteLine();
+                            }
+                            else
+                            {
+                                ThrowError(m_lineNumber, line, "Invalid register index!");
+                            }
                         }
                         else if (words[1].StartsWith("R") && words[2].StartsWith("(") && words[2].EndsWith(")"))
                         {
-
                             string registru = words[2].Trim('(', ')');
-                            mas = 2;
-                            mad = 1;
                             UInt16 indexDestination = UInt16.Parse(words[1].Substring(1));
                             UInt16 indexSource = UInt16.Parse(registru.Substring(1));
+                            if (indexDestination <= 15 && indexSource <= 15)
+                            {
+                                mas = 2;
+                                mad = 1;
 
-                            instructionCode = (UInt16)(instructionCode | indexDestination);
-                            instructionCode = (UInt16)(instructionCode | (indexSource << 6));
-                            instructionCode = (UInt16)(instructionCode | (mad << 4));
-                            instructionCode = (UInt16)(instructionCode | (mas << 10));
+                                instructionCode = (UInt16)(instructionCode | indexDestination);
+                                instructionCode = (UInt16)(instructionCode | (indexSource << 6));
+                                instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                instructionCode = (UInt16)(instructionCode | (mas << 10));
 
-                            AddToOutput(instructionCode);
-                            Console.WriteLine(instructionCode);
-                            Console.WriteLine();
-
+                                AddToOutput(instructionCode);
+                                Console.WriteLine(instructionCode);
+                                Console.WriteLine();
+                            }
+                            else
+                            {
+                                ThrowError(m_lineNumber, line, "Invalid register index!");
+                            }
                         }
                         else if (words[1].StartsWith("R") && words[2].Contains("("))
                         {
-                            mas = 3;
-                            mad = 1;
                             UInt16 indexDestination = UInt16.Parse(words[1].Substring(1));
                             UInt16 indexSource = 0;
                             Int16 index = 0;
@@ -282,76 +303,110 @@ namespace Assembler
 
                             // UInt16 indexSource = UInt16.Parse(words[2].Substring(words[2].IndexOf('(') + 2, 1));
 
-                            instructionCode = (UInt16)(instructionCode | indexDestination);
-                            instructionCode = (UInt16)(instructionCode | (indexSource << 6));
-                            instructionCode = (UInt16)(instructionCode | (mad << 4));
-                            instructionCode = (UInt16)(instructionCode | (mas << 10));
+                            if (indexDestination <= 15 && indexSource <= 15)
+                            {
+                                mas = 3;
+                                mad = 1;
 
-                            AddToOutput(instructionCode, index);
-                            Console.WriteLine(instructionCode);
-                            Console.WriteLine(index);
-                            Console.WriteLine();
+                                instructionCode = (UInt16)(instructionCode | indexDestination);
+                                instructionCode = (UInt16)(instructionCode | (indexSource << 6));
+                                instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                instructionCode = (UInt16)(instructionCode | (mas << 10));
 
+                                AddToOutput(instructionCode, index);
+                                Console.WriteLine(instructionCode);
+                                Console.WriteLine(index);
+                                Console.WriteLine();
+                            }
+                            else
+                            {
+                                ThrowError(m_lineNumber, line, "Invalid register index!");
+                            }
                         }
                         else if (words[1].StartsWith("(") && words[1].EndsWith(")") && System.Text.RegularExpressions.Regex.IsMatch(words[2], @"^\d+H?$"))
-                        {
-                            Int16 operand = ResolveImmediateOperand(words[2]);
-                            string registru = words[1].Trim('(', ')');
-                            mas = 0;
-                            mad = 2;
-                            UInt16 indexDestination = UInt16.Parse(registru.Substring(1));
+                        {                          
+                            if (ResolveImmediateOperand(words[2], out Int16 operand) != false)
+                            {
+                                string registru = words[1].Trim('(', ')');
+                                UInt16 indexDestination = UInt16.Parse(registru.Substring(1));
 
-                            instructionCode = (UInt16)(instructionCode | indexDestination);
-                            instructionCode = (UInt16)(instructionCode | (mad << 4));
-                            instructionCode = (UInt16)(instructionCode | (mas << 10));
+                                if (indexDestination <= 15)
+                                {
+                                    mas = 0;
+                                    mad = 2;
 
-                            AddToOutput(instructionCode, operand);
-                            Console.WriteLine(instructionCode);
-                            Console.WriteLine(operand);
-                            Console.WriteLine();
+                                    instructionCode = (UInt16)(instructionCode | indexDestination);
+                                    instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                    instructionCode = (UInt16)(instructionCode | (mas << 10));
+
+                                    AddToOutput(instructionCode, operand);
+                                    Console.WriteLine(instructionCode);
+                                    Console.WriteLine(operand);
+                                    Console.WriteLine();
+                                }
+                                else
+                                {
+                                    ThrowError(m_lineNumber, line, "Invalid register index!");
+                                }
+                            }
+                            else
+                            {
+                                ThrowError(m_lineNumber, line, "Invalid immediate value!");
+                            }
                         }
                         else if (words[1].StartsWith("(") && words[1].EndsWith(")") && words[2].StartsWith("R"))
                         {
                             string registru = words[1].Trim('(', ')');
-                            mas = 1;
-                            mad = 2;
                             UInt16 indexDestination = UInt16.Parse(registru.Substring(1));
                             UInt16 indexSource = UInt16.Parse(words[2].Substring(1));
 
-                            instructionCode = (UInt16)(instructionCode | (indexSource << 6));
-                            instructionCode = (UInt16)(instructionCode | indexDestination);
-                            instructionCode = (UInt16)(instructionCode | (mad << 4));
-                            instructionCode = (UInt16)(instructionCode | (mas << 10));
+                            if (indexDestination <= 15 && indexSource <= 15)
+                            {
+                                mas = 1;
+                                mad = 2;
 
-                            AddToOutput(instructionCode);
-                            Console.WriteLine(instructionCode);
-                            Console.WriteLine();
+                                instructionCode = (UInt16)(instructionCode | (indexSource << 6));
+                                instructionCode = (UInt16)(instructionCode | indexDestination);
+                                instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                instructionCode = (UInt16)(instructionCode | (mas << 10));
 
+                                AddToOutput(instructionCode);
+                                Console.WriteLine(instructionCode);
+                                Console.WriteLine();
+                            }
+                            else
+                            {
+                                ThrowError(m_lineNumber, line, "Invalid register index!");
+                            }
                         }
                         else if (words[1].StartsWith("(") && words[1].EndsWith(")") && words[2].StartsWith("(") && words[2].EndsWith(")"))
                         {
                             string registruDest = words[1].Trim('(', ')');
                             string registruSursa = words[2].Trim('(', ')');
-                            mas = 2;
-                            mad = 2;
                             UInt16 indexDestination = UInt16.Parse(registruDest.Substring(1));
                             UInt16 indexSource = UInt16.Parse(registruSursa.Substring(1));
 
-                            instructionCode = (UInt16)(instructionCode | (mad << 4));
-                            instructionCode = (UInt16)(instructionCode | (mas << 10));
-                            instructionCode = (UInt16)(instructionCode | (indexSource << 6));
-                            instructionCode = (UInt16)(instructionCode | indexDestination);
+                            if (indexDestination <= 15 && indexSource <= 15)
+                            {
+                                mas = 2;
+                                mad = 2;
+                                instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                instructionCode = (UInt16)(instructionCode | (mas << 10));
+                                instructionCode = (UInt16)(instructionCode | (indexSource << 6));
+                                instructionCode = (UInt16)(instructionCode | indexDestination);
 
-                            AddToOutput(instructionCode);
-                            Console.WriteLine(instructionCode);
-                            Console.WriteLine();
-
+                                AddToOutput(instructionCode);
+                                Console.WriteLine(instructionCode);
+                                Console.WriteLine();
+                            }
+                            else
+                            {
+                                ThrowError(m_lineNumber, line, "Invalid register index!");
+                            }
                         }
                         else if (words[1].StartsWith("(") && words[1].EndsWith(")") && words[2].Contains("("))
                         {
                             string registruDest = words[1].Trim('(', ')');
-                            mas = 3;
-                            mad = 2;
                             UInt16 indexDestination = UInt16.Parse(registruDest.Substring(1));
                             UInt16 indexSource = 0;
                             Int16 index = 0;
@@ -368,57 +423,77 @@ namespace Assembler
                                 index = Int16.Parse(registerAndIndex[0]);
                             }
 
-                            instructionCode = (UInt16)(instructionCode | (mad << 4));
-                            instructionCode = (UInt16)(instructionCode | (mas << 10));
-                            instructionCode = (UInt16)(instructionCode | (indexSource << 6));
-                            instructionCode = (UInt16)(instructionCode | indexDestination);
+                            if (indexDestination <= 15 && indexSource <= 15)
+                            {
+                                mas = 3;
+                                mad = 2;
+                                instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                instructionCode = (UInt16)(instructionCode | (mas << 10));
+                                instructionCode = (UInt16)(instructionCode | (indexSource << 6));
+                                instructionCode = (UInt16)(instructionCode | indexDestination);
 
-                            AddToOutput(instructionCode, index);
-                            Console.WriteLine(instructionCode);
-                            Console.WriteLine(index);
-                            Console.WriteLine();
+                                AddToOutput(instructionCode, index);
+                                Console.WriteLine(instructionCode);
+                                Console.WriteLine(index);
+                                Console.WriteLine();
+                            }
+                            else
+                            {
+                                ThrowError(m_lineNumber, line, "Invalid register index!");
+                            }
 
                         }
                         else if (words[1].Contains("(") && System.Text.RegularExpressions.Regex.IsMatch(words[2], @"^\d+H?$"))
                         {
-                            Int16 operand = ResolveImmediateOperand(words[2]);
-                            mas = 0;
-                            mad = 3;
-                            UInt16 indexDestination = 0;
-                            Int16 index = 0;
-                            if (words[1].IndexOf('(') == 0)
+                            if (ResolveImmediateOperand(words[2], out Int16 operand) != false)
                             {
-                                string test = words[1];
-                                string[] registerAndIndex = words[1].Split(')');
-                                indexDestination = UInt16.Parse(registerAndIndex[0].Substring(2));
-                                index = Int16.Parse(registerAndIndex[1]);
+
+                                UInt16 indexDestination = 0;
+                                Int16 index = 0;
+                                if (words[1].IndexOf('(') == 0)
+                                {
+                                    string test = words[1];
+                                    string[] registerAndIndex = words[1].Split(')');
+                                    indexDestination = UInt16.Parse(registerAndIndex[0].Substring(2));
+                                    index = Int16.Parse(registerAndIndex[1]);
+                                }
+                                else
+                                {
+                                    string[] registerAndIndex = words[1].Split('(', ')');
+                                    indexDestination = UInt16.Parse(registerAndIndex[1].Substring(1));
+                                    index = Int16.Parse(registerAndIndex[0]);
+                                }
+
+                                if (indexDestination <= 15)
+                                {
+                                    mas = 0;
+                                    mad = 3;
+
+                                    instructionCode = (UInt16)(instructionCode | indexDestination);
+                                    instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                    instructionCode = (UInt16)(instructionCode | (mas << 10));
+
+                                    AddToOutput(instructionCode, index, operand);
+                                    Console.WriteLine(instructionCode);
+                                    Console.WriteLine(index);
+                                    Console.WriteLine(operand);
+                                    Console.WriteLine();
+                                }
+                                else
+                                {
+                                    ThrowError(m_lineNumber, line, "Invalid register index!");
+                                }
                             }
                             else
                             {
-                                string[] registerAndIndex = words[1].Split('(', ')');
-                                indexDestination = UInt16.Parse(registerAndIndex[1].Substring(1));
-                                index = Int16.Parse(registerAndIndex[0]);
+                                ThrowError(m_lineNumber, line, "Invalid immediate value!");
                             }
-
-                            instructionCode = (UInt16)(instructionCode | indexDestination);
-                            instructionCode = (UInt16)(instructionCode | (mad << 4));
-                            instructionCode = (UInt16)(instructionCode | (mas << 10));
-
-                            AddToOutput(instructionCode, index, operand);
-                            Console.WriteLine(instructionCode);
-                            Console.WriteLine(index);
-                            Console.WriteLine(operand);
-                            Console.WriteLine();
-
                         }
                         else if (words[1].Contains("(") && words[2].StartsWith("R"))
                         {
-                            mas = 1;
-                            mad = 3;
                             UInt16 indexDestination = 0;
                             Int16 index = 0;
                             UInt16 indexSource = UInt16.Parse(words[2].Substring(1));
-
                             if (words[1].IndexOf('(') == 0)
                             {
                                 string test = words[1];
@@ -433,22 +508,29 @@ namespace Assembler
                                 index = Int16.Parse(registerAndIndex[0]);
                             }
 
-                            instructionCode = (UInt16)(instructionCode | indexDestination);
-                            instructionCode = (UInt16)(instructionCode | (mad << 4));
-                            instructionCode = (UInt16)(instructionCode | (indexSource << 6));
-                            instructionCode = (UInt16)(instructionCode | (mas << 10));
+                            if (indexDestination <= 15 && indexSource <= 15)
+                            {
+                                mas = 1;
+                                mad = 3;
 
-                            AddToOutput(instructionCode, index);
-                            Console.WriteLine(instructionCode);
-                            Console.WriteLine(index);
-                            Console.WriteLine();
+                                instructionCode = (UInt16)(instructionCode | indexDestination);
+                                instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                instructionCode = (UInt16)(instructionCode | (indexSource << 6));
+                                instructionCode = (UInt16)(instructionCode | (mas << 10));
 
+                                AddToOutput(instructionCode, index);
+                                Console.WriteLine(instructionCode);
+                                Console.WriteLine(index);
+                                Console.WriteLine();
+                            }
+                            else
+                            {
+                                ThrowError(m_lineNumber, line, "Invalid register index!");
+                            }
                         }
                         else if (words[1].Contains("(") && words[2].StartsWith("(") && words[2].EndsWith(")"))
                         {
                             string registruSursa = words[2].Trim('(', ')');
-                            mas = 2;
-                            mad = 3;
                             UInt16 indexDestination = 0;
                             Int16 index = 0;
                             UInt16 indexSource = UInt16.Parse(registruSursa.Substring(1));
@@ -467,20 +549,28 @@ namespace Assembler
                                 index = Int16.Parse(registerAndIndex[0]);
                             }
 
-                            instructionCode = (UInt16)(instructionCode | indexDestination);
-                            instructionCode = (UInt16)(instructionCode | (mad << 4));
-                            instructionCode = (UInt16)(instructionCode | (indexSource << 6));
-                            instructionCode = (UInt16)(instructionCode | (mas << 10));
+                            if (indexDestination <= 15 && indexSource <= 15)
+                            {
+                                mas = 2;
+                                mad = 3;
 
-                            AddToOutput(instructionCode, index);
-                            Console.WriteLine(instructionCode);
-                            Console.WriteLine(index);
-                            Console.WriteLine();
+                                instructionCode = (UInt16)(instructionCode | indexDestination);
+                                instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                instructionCode = (UInt16)(instructionCode | (indexSource << 6));
+                                instructionCode = (UInt16)(instructionCode | (mas << 10));
+
+                                AddToOutput(instructionCode, index);
+                                Console.WriteLine(instructionCode);
+                                Console.WriteLine(index);
+                                Console.WriteLine();
+                            }
+                            else
+                            {
+                                ThrowError(m_lineNumber, line, "Invalid register index!");
+                            }
                         }
                         else if (words[1].Contains("(") && words[2].Contains("("))
                         {
-                            mas = 3;
-                            mad = 3;
                             UInt16 indexDestination = 0;
                             Int16 indexD = 0;
                             UInt16 indexSource = 0;
@@ -513,21 +603,30 @@ namespace Assembler
                                 indexS = Int16.Parse(registerAndIndex[0]);
                             }
 
-                            instructionCode = (UInt16)(instructionCode | indexDestination);
-                            instructionCode = (UInt16)(instructionCode | (mad << 4));
-                            instructionCode = (UInt16)(instructionCode | (indexSource << 6));
-                            instructionCode = (UInt16)(instructionCode | (mas << 10));
+                            if (indexDestination <= 15 && indexSource <= 15)
+                            {
+                                mas = 3;
+                                mad = 3;
 
+                                instructionCode = (UInt16)(instructionCode | indexDestination);
+                                instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                instructionCode = (UInt16)(instructionCode | (indexSource << 6));
+                                instructionCode = (UInt16)(instructionCode | (mas << 10));
 
-                            AddToOutput(instructionCode, indexS, indexD);
-                            Console.WriteLine(instructionCode);
-                            Console.WriteLine(indexS);
-                            Console.WriteLine(indexD);
-                            Console.WriteLine();
+                                AddToOutput(instructionCode, indexS, indexD);
+                                Console.WriteLine(instructionCode);
+                                Console.WriteLine(indexS);
+                                Console.WriteLine(indexD);
+                                Console.WriteLine();
+                            }
+                            else
+                            {
+                                ThrowError(m_lineNumber, line, "Invalid register index!");
+                            }
                         }
                         else
                         {
-                            Console.WriteLine("instructiune incorecta");
+                            ThrowError(m_lineNumber, line, "Invalid operand!");
                         }
                     }
                     else if (words.Length == 2)
@@ -542,11 +641,11 @@ namespace Assembler
                                 var offset = Convert.ToInt16(offsetStr, 16);
                                 if (offset < -128 || offset > 127)
                                 {
-                                    Console.WriteLine("Offset overflow");
+                                    ThrowError(m_lineNumber, line, "Offset overflow!");
                                 }
                                 else if (offset % 2 == 1)
                                 {
-                                    Console.WriteLine("Offset must be even!");
+                                    ThrowError(m_lineNumber, line, "Offset must be even!");
                                 }
                                 else
                                 {
@@ -562,11 +661,11 @@ namespace Assembler
                                 var offset = Convert.ToInt16(words[1], 10);
                                 if (offset < -128 || offset > 127)
                                 {
-                                    Console.WriteLine("Offset overflow");
+                                    ThrowError(m_lineNumber, line, "Offset overflow!");
                                 }
                                 else if (offset % 2 == 1)
                                 {
-                                    Console.WriteLine("Offset must be even!");
+                                    ThrowError(m_lineNumber, line, "Offset must be even!");
                                 }
                                 else
                                 {
@@ -579,23 +678,29 @@ namespace Assembler
                             else
                             {
                                 string label = words[1] + ":";
-
-                                var offset = BytesToLabel(label) - m_bytesFromStart;
-                                Console.WriteLine("Bytes from start : " + m_bytesFromStart);
-                                Console.WriteLine("Bytes to label : " + BytesToLabel(label));
-                                Console.WriteLine("OFFSET : " + offset);
-
-                                if (offset < -128 || offset > 127)
+                                if (BytesToLabel(label, out Int16 offset) != false)
                                 {
-                                    Console.WriteLine("Offset overflow");
+                                    offset = (Int16)(offset - m_bytesFromStart);
+                                    Console.WriteLine("Bytes from start : " + m_bytesFromStart);
+                                    Console.WriteLine("Bytes to label : " + offset);
+                                    Console.WriteLine("OFFSET : " + offset);
+
+                                    if (offset < -128 || offset > 127)
+                                    {
+                                        ThrowError(m_lineNumber, line, "Offset overflow!");
+                                    }
+                                    else
+                                    {
+                                        instructionCode = (UInt16)(instructionCode | offset);
+                                    }
+                                    AddToOutput(instructionCode);
+                                    Console.WriteLine(instructionCode);
+                                    Console.WriteLine();
                                 }
                                 else
                                 {
-                                    instructionCode = (UInt16)(instructionCode | offset);
+                                    ThrowError(m_lineNumber, line, "Undefined label \"" + words[1] + "\"!");
                                 }
-                                AddToOutput(instructionCode);
-                                Console.WriteLine(instructionCode);
-                                Console.WriteLine();
                             }
                         }
                         // Instr cu 1 op 
@@ -604,34 +709,46 @@ namespace Assembler
                             // R7
                             if (words[1].StartsWith("R"))
                             {
-                                mad = 1;
                                 UInt16 indexDestination = UInt16.Parse(words[1].Substring(1));
+                                if (indexDestination <= 15)
+                                {
+                                    mad = 1;
+                                    instructionCode = (UInt16)(instructionCode | indexDestination);
+                                    instructionCode = (UInt16)(instructionCode | (mad << 4));
 
-                                instructionCode = (UInt16)(instructionCode | indexDestination);
-                                instructionCode = (UInt16)(instructionCode | (mad << 4));
-                                
-                                AddToOutput(instructionCode);
-                                Console.WriteLine(instructionCode);
-                                Console.WriteLine();
+                                    AddToOutput(instructionCode);
+                                    Console.WriteLine(instructionCode);
+                                    Console.WriteLine();
+                                }
+                                else
+                                {
+                                    ThrowError(m_lineNumber, line, "Invalid register index!");
+                                }
                             }
                             // (R7)
                             else if (words[1].StartsWith("(") && words[1].EndsWith(")"))
                             {
                                 string registru = words[1].Trim('(', ')');
-                                mad = 2;
                                 UInt16 indexDestination = UInt16.Parse(registru.Substring(1));
 
-                                instructionCode = (UInt16)(instructionCode | indexDestination);
-                                instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                if (indexDestination <= 15)
+                                {
+                                    mad = 2;
+                                    instructionCode = (UInt16)(instructionCode | indexDestination);
+                                    instructionCode = (UInt16)(instructionCode | (mad << 4));
 
-                                AddToOutput(instructionCode);
-                                Console.WriteLine(instructionCode);
-                                Console.WriteLine();
+                                    AddToOutput(instructionCode);
+                                    Console.WriteLine(instructionCode);
+                                    Console.WriteLine();
+                                }
+                                else
+                                {
+                                    ThrowError(m_lineNumber, line, "Invalid register index!");
+                                }
                             }
                             // 15(R7), (R7)15
                             else if (words[1].Contains("("))
                             {
-                                mad = 3;
                                 UInt16 indexDestination = 0;
                                 Int16 index = 0;
                                 if (words[1].IndexOf('(') == 0)
@@ -647,37 +764,51 @@ namespace Assembler
                                     index = Int16.Parse(registerAndIndex[0]);
                                 }
 
-                                instructionCode = (UInt16)(instructionCode | indexDestination);
-                                instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                if (indexDestination <= 15)
+                                {
+                                    mad = 3;
+                                    instructionCode = (UInt16)(instructionCode | indexDestination);
+                                    instructionCode = (UInt16)(instructionCode | (mad << 4));
 
-                                AddToOutput(instructionCode, index);
-                                Console.WriteLine(instructionCode);
-                                Console.WriteLine(index);
-                                Console.WriteLine();
+                                    AddToOutput(instructionCode, index);
+                                    Console.WriteLine(instructionCode);
+                                    Console.WriteLine(index);
+                                    Console.WriteLine();
+                                }
+                                else
+                                {
+                                    ThrowError(m_lineNumber, line, "Invalid register index!");
+                                }
                             }
                             // 17, 17H, label, proc
                             else
                             {
                                 if (System.Text.RegularExpressions.Regex.IsMatch(words[1], @"^\d+H?$"))
                                 {
-                                    mad = 0;
-                                    Int16 operand = ResolveImmediateOperand(words[1]);
-                                    instructionCode = (UInt16)(instructionCode | (mad << 4));
+                                    if (ResolveImmediateOperand(words[1], out Int16 operand) != false) 
+                                    {
+                                        mad = 0;
+                                        instructionCode = (UInt16)(instructionCode | (mad << 4));
 
-                                    AddToOutput(instructionCode, operand);
-                                    Console.WriteLine(instructionCode);
-                                    Console.WriteLine(operand);
-                                    Console.WriteLine();
+                                        AddToOutput(instructionCode, operand);
+                                        Console.WriteLine(instructionCode);
+                                        Console.WriteLine(operand);
+                                        Console.WriteLine();
+                                    }
+                                    else 
+                                    {
+                                        ThrowError(m_lineNumber, line, "Invalid immediate value!");
+                                    }
+                                    
                                 }
                                 else
                                 {
                                     if (words[0] == "JMP")
                                     {
                                         string label = words[1] + ":";
-                                        if (BytesToLabel(label) != -1)
+                                        if (BytesToLabel(label, out Int16 adrOperand) != false)
                                         {
-                                            var adrOperand = BytesToLabel(label);
-                                            Console.WriteLine("Bytes to label : " + BytesToLabel(label));
+                                            Console.WriteLine("Bytes to label : " + adrOperand);
                                             mad = 0;
                                             instructionCode = (UInt16)(instructionCode | (mad << 4));
 
@@ -686,12 +817,15 @@ namespace Assembler
                                             Console.WriteLine(adrOperand);
                                             Console.WriteLine();
                                         }
+                                        else
+                                        {
+                                            ThrowError(m_lineNumber, line, "Undefined label \"" + words[1] + "\"!");
+                                        }
                                     }
                                     else if (words[0] == "CALL")
                                     {
-                                        if (BytesToProc(words[1]) != -1)
+                                        if (BytesToProc(words[1], out Int16 adrOperand) != false)
                                         {
-                                            var adrOperand = BytesToProc(words[1]);
                                             Console.WriteLine("Bytes to proc : " + adrOperand);
                                             mad = 0;
                                             instructionCode = (UInt16)(instructionCode | (mad << 4));
@@ -700,6 +834,10 @@ namespace Assembler
                                             Console.WriteLine(instructionCode);
                                             Console.WriteLine(adrOperand);
                                             Console.WriteLine();
+                                        }
+                                        else
+                                        {
+                                            ThrowError(m_lineNumber, line, "Undefined procedure \"" + words[1] + "\"!");
                                         }
                                     }
                                 }
@@ -712,6 +850,11 @@ namespace Assembler
                         Console.WriteLine(instructionCode);
                         Console.WriteLine();
                     }
+                    else
+                    {
+                        ThrowError(m_lineNumber, line, "Unknown error!");
+                    }
+
                     if (mas == 0 || mas == 3)
                     {
                         m_bytesFromStart += 2;
@@ -723,16 +866,19 @@ namespace Assembler
                 }
                 else
                 {
-                    Console.WriteLine("NU INSTR: " + line);
-                    Console.WriteLine();
+                    // Throw error if the line is not a comment, a label, an empty line or starting/ending a procedure.
+                    if (!System.Text.RegularExpressions.Regex.IsMatch(line, @"^(;|PROC|ENDP|.+:|\s*).*$"))
+                    {
+                        ThrowError(m_lineNumber, line, "Unknown syntax!");
+                    }
                 }
-                lineNumber++;
+                m_lineNumber++;
             }
 
             File.WriteAllBytes(m_outputFilePath, m_output.ToArray());
         }
     
-        private Int16 BytesToLabel(string label)
+        private bool BytesToLabel(string label, out Int16 bytes)
         {
             string[] lines = File.ReadAllLines(m_inputFilePath);
             StringCollection instructions = new StringCollection();
@@ -744,7 +890,7 @@ namespace Assembler
                 lines[i] = lines[i].Trim();
             }
 
-            Int16 bytes = 0;
+            bytes = 0;
             bool labelFound = false;
             foreach (string line in lines)
             {
@@ -778,18 +924,10 @@ namespace Assembler
                     break;
                 }
             }
-
-            if (labelFound)
-            {
-                return bytes;
-            }
-            else
-            {
-                return -1;
-            }
+            return labelFound;
         }
 
-        private Int16 BytesToProc(string proc)
+        private bool BytesToProc(string proc, out Int16 bytes)
         {
             string[] lines = File.ReadAllLines(m_inputFilePath);
             StringCollection instructions = new StringCollection();
@@ -801,7 +939,7 @@ namespace Assembler
                 lines[i] = lines[i].Trim();
             }
 
-            Int16 bytes = 0;
+            bytes = 0;
             bool procFound = false;
             foreach (string line in lines)
             {
@@ -832,18 +970,56 @@ namespace Assembler
                     }
                 }
             }
+            return procFound;
+        }
 
-            if (procFound)
+        private bool ResolveImmediateOperand(string operand, out Int16 value)
+        {
+            if (System.Text.RegularExpressions.Regex.IsMatch(operand, @"^\d+H$"))
             {
-                return bytes;
+                string operandStr = operand.Remove(operand.Length - 1, 1);
+                value = Convert.ToInt16(operandStr, 16);
+                return true;
             }
-            else
+            // decimal immediate value
+            else if (System.Text.RegularExpressions.Regex.IsMatch(operand, @"^\d+$"))
             {
-                return -1;
+                value = Convert.ToInt16(operand, 10);
+                return true;
+            }
+            value = Int16.MinValue;
+            return false;
+        }
+
+        private void AddToOutput(UInt16 instructionCode)
+        {
+            byte high, low;
+
+            high = (byte)(instructionCode >> 8);
+            low = (byte)(instructionCode & 0x00FF);
+            m_output.Add(high);
+            m_output.Add(low);
+        }
+
+        private void AddToOutput(UInt16 instructionCode, Int16 operand1)
+        {
+            byte high, low;
+
+            high = (byte)(instructionCode >> 8);
+            low = (byte)(instructionCode & 0x00FF);
+            m_output.Add(high);
+            m_output.Add(low);
+
+            if (operand1 != Int16.MaxValue)
+            {
+                high = (byte)(operand1 >> 8);
+                low = (byte)(operand1 & 0x00FF);
+                m_output.Add(high);
+                m_output.Add(low);
             }
         }
 
-        private void AddToOutput(UInt16 instructionCode, Int16 operand1 = Int16.MaxValue, Int16 operand2 = Int16.MaxValue)
+        private void AddToOutput(UInt16 instructionCode, Int16 operand1, Int16 operand2)
         {
             byte high, low;
 
@@ -869,21 +1045,11 @@ namespace Assembler
             }
         }
 
-        // Prelucreaza o valoare imediata data in decimal/hexa si returneaza valoare in decimal
-        private Int16 ResolveImmediateOperand(string operand)
+        private void ThrowError(int m_lineNumber, string line, string message)
         {
-            if (System.Text.RegularExpressions.Regex.IsMatch(operand, @"^\d+H$"))
-            {
-                string operandStr = operand.Remove(operand.Length - 1, 1);
-                return Convert.ToInt16(operandStr, 16);
-
-            }
-            // decimal immediate value
-            else if (System.Text.RegularExpressions.Regex.IsMatch(operand, @"^\d+$"))
-            {
-                return Convert.ToInt16(operand, 10);
-            }
-            return Int16.MaxValue;
+            String errorMessage = ">>>> ERROR! " + m_lineNumber.ToString() + ":" + line + " << " + message;
+            Console.WriteLine(errorMessage);
+            Console.WriteLine();
         }
     }
 }
