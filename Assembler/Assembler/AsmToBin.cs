@@ -7,19 +7,22 @@ using System.Collections.Specialized;
 
 namespace Assembler
 {
-
     class AsmToBin
     {
-        private string m_path;
+        private string m_inputFilePath;
+        private string m_outputFilePath;
+        private List <byte> m_output = new List <byte> ();
         private string[] m_instructions = { "MOV", "ADD", "SUB", "CMP", "AND", "OR", "XOR", "CLR", "NEG", "INC", "DEC", "ASL", "ASR", "LSR", "ROL",
             "ROR", "RLC", "RRC", "JMP", "CALL", "PUSH", "POP", "BR", "BNE", "BEQ", "BPL", "BMI", "BCS", "BCC", "BVS", "BVC", "CLC", "CLV",
             "CLZ", "CLS", "CCC", "SEC", "SEV", "SEZ", "SES", "SCC", "NOP", "RET", "RETI", "HALT", "WAIT", "PUSHPC", "POPPC", "PUSHFLAG",
             "POPFLAG"};
-        private Int16 bytesFromStart = 0;
-        public void ParseAndTransform(string path)
+        private Int16 m_bytesFromStart = 0;
+
+        public void ParseAndTransform(string inputFilePath, string outputFilePath)
         {
-            m_path = path;
-            string[] lines = File.ReadAllLines(path);
+            m_inputFilePath = inputFilePath;
+            m_outputFilePath = outputFilePath;
+            string[] lines = File.ReadAllLines(m_inputFilePath);
             
             for(int i=0; i<lines.Length; i++)
             {
@@ -30,7 +33,6 @@ namespace Assembler
             var lineNumber = 0;
             foreach(string line in lines)
             {
-
                 char[] delimiters = {',', ' ','\t'};
                 string[] words = line.Split(delimiters);
                 UInt16 instructionCode = 0;
@@ -39,7 +41,7 @@ namespace Assembler
                 instructions.AddRange(m_instructions);
                 if (instructions.Contains(words[0]))
                 {
-                    bytesFromStart += 2;
+                    m_bytesFromStart += 2;
                     Console.WriteLine(line);
 
                     // opcode mas rs mad rd
@@ -201,16 +203,14 @@ namespace Assembler
                             break;
                     }
 
-
                     Int16 mas = -1;
                     Int16 mad = -1;
 
                     if (words.Length == 3)
                     {
-
                         if (words[1].StartsWith("R") && System.Text.RegularExpressions.Regex.IsMatch(words[2], @"^\d+H?$"))
                         {
-                            UInt16 operand = ResolveImmediateOperand(words[2]);
+                            Int16 operand = ResolveImmediateOperand(words[2]);
                             mas = 0;
                             mad = 1;
                             UInt16 indexDestination = UInt16.Parse(words[1].Substring(1));
@@ -219,6 +219,7 @@ namespace Assembler
                             instructionCode = (UInt16)(instructionCode | (mad << 4));
                             instructionCode = (UInt16)(instructionCode | (mas << 10));
 
+                            AddToOutput(instructionCode, operand);
                             Console.WriteLine(instructionCode);
                             Console.WriteLine(operand);
                             Console.WriteLine();
@@ -234,6 +235,8 @@ namespace Assembler
                             instructionCode = (UInt16)(instructionCode | (indexSource << 6));
                             instructionCode = (UInt16)(instructionCode | (mad << 4));
                             instructionCode = (UInt16)(instructionCode | (mas << 10));
+
+                            AddToOutput(instructionCode);
                             Console.WriteLine(instructionCode);
                             Console.WriteLine();
                         }
@@ -250,6 +253,8 @@ namespace Assembler
                             instructionCode = (UInt16)(instructionCode | (indexSource << 6));
                             instructionCode = (UInt16)(instructionCode | (mad << 4));
                             instructionCode = (UInt16)(instructionCode | (mas << 10));
+
+                            AddToOutput(instructionCode);
                             Console.WriteLine(instructionCode);
                             Console.WriteLine();
 
@@ -260,19 +265,19 @@ namespace Assembler
                             mad = 1;
                             UInt16 indexDestination = UInt16.Parse(words[1].Substring(1));
                             UInt16 indexSource = 0;
-                            UInt16 index = 0;
+                            Int16 index = 0;
 
                             if (words[2].IndexOf('(') == 0)
                             {
                                 string[] registerAndIndex = words[2].Split(')');
                                 indexSource = UInt16.Parse(registerAndIndex[0].Substring(2));
-                                index = UInt16.Parse(registerAndIndex[1]);
+                                index = Int16.Parse(registerAndIndex[1]);
                             }
                             else
                             {
                                 string[] registerAndIndex = words[2].Split('(', ')');
                                 indexSource = UInt16.Parse(registerAndIndex[1].Substring(1));
-                                index = UInt16.Parse(registerAndIndex[0]);
+                                index = Int16.Parse(registerAndIndex[0]);
                             }
 
                             // UInt16 indexSource = UInt16.Parse(words[2].Substring(words[2].IndexOf('(') + 2, 1));
@@ -281,6 +286,8 @@ namespace Assembler
                             instructionCode = (UInt16)(instructionCode | (indexSource << 6));
                             instructionCode = (UInt16)(instructionCode | (mad << 4));
                             instructionCode = (UInt16)(instructionCode | (mas << 10));
+
+                            AddToOutput(instructionCode, index);
                             Console.WriteLine(instructionCode);
                             Console.WriteLine(index);
                             Console.WriteLine();
@@ -288,7 +295,7 @@ namespace Assembler
                         }
                         else if (words[1].StartsWith("(") && words[1].EndsWith(")") && System.Text.RegularExpressions.Regex.IsMatch(words[2], @"^\d+H?$"))
                         {
-                            UInt16 operand = ResolveImmediateOperand(words[2]);
+                            Int16 operand = ResolveImmediateOperand(words[2]);
                             string registru = words[1].Trim('(', ')');
                             mas = 0;
                             mad = 2;
@@ -298,6 +305,7 @@ namespace Assembler
                             instructionCode = (UInt16)(instructionCode | (mad << 4));
                             instructionCode = (UInt16)(instructionCode | (mas << 10));
 
+                            AddToOutput(instructionCode, operand);
                             Console.WriteLine(instructionCode);
                             Console.WriteLine(operand);
                             Console.WriteLine();
@@ -315,6 +323,7 @@ namespace Assembler
                             instructionCode = (UInt16)(instructionCode | (mad << 4));
                             instructionCode = (UInt16)(instructionCode | (mas << 10));
 
+                            AddToOutput(instructionCode);
                             Console.WriteLine(instructionCode);
                             Console.WriteLine();
 
@@ -333,6 +342,7 @@ namespace Assembler
                             instructionCode = (UInt16)(instructionCode | (indexSource << 6));
                             instructionCode = (UInt16)(instructionCode | indexDestination);
 
+                            AddToOutput(instructionCode);
                             Console.WriteLine(instructionCode);
                             Console.WriteLine();
 
@@ -344,55 +354,57 @@ namespace Assembler
                             mad = 2;
                             UInt16 indexDestination = UInt16.Parse(registruDest.Substring(1));
                             UInt16 indexSource = 0;
-                            UInt16 index = 0;
+                            Int16 index = 0;
                             if (words[2].IndexOf('(') == 0)
                             {
                                 string[] registerAndIndex = words[2].Split(')');
                                 indexSource = UInt16.Parse(registerAndIndex[0].Substring(2));
-                                index = UInt16.Parse(registerAndIndex[1]);
+                                index = Int16.Parse(registerAndIndex[1]);
                             }
                             else
                             {
                                 string[] registerAndIndex = words[2].Split('(', ')');
                                 indexSource = UInt16.Parse(registerAndIndex[1].Substring(1));
-                                index = UInt16.Parse(registerAndIndex[0]);
+                                index = Int16.Parse(registerAndIndex[0]);
                             }
-
 
                             instructionCode = (UInt16)(instructionCode | (mad << 4));
                             instructionCode = (UInt16)(instructionCode | (mas << 10));
                             instructionCode = (UInt16)(instructionCode | (indexSource << 6));
                             instructionCode = (UInt16)(instructionCode | indexDestination);
 
+                            AddToOutput(instructionCode, index);
                             Console.WriteLine(instructionCode);
+                            Console.WriteLine(index);
                             Console.WriteLine();
 
                         }
                         else if (words[1].Contains("(") && System.Text.RegularExpressions.Regex.IsMatch(words[2], @"^\d+H?$"))
                         {
-                            UInt16 operand = ResolveImmediateOperand(words[2]);
+                            Int16 operand = ResolveImmediateOperand(words[2]);
                             mas = 0;
                             mad = 3;
                             UInt16 indexDestination = 0;
-                            UInt16 index = 0;
+                            Int16 index = 0;
                             if (words[1].IndexOf('(') == 0)
                             {
                                 string test = words[1];
                                 string[] registerAndIndex = words[1].Split(')');
                                 indexDestination = UInt16.Parse(registerAndIndex[0].Substring(2));
-                                index = UInt16.Parse(registerAndIndex[1]);
+                                index = Int16.Parse(registerAndIndex[1]);
                             }
                             else
                             {
                                 string[] registerAndIndex = words[1].Split('(', ')');
                                 indexDestination = UInt16.Parse(registerAndIndex[1].Substring(1));
-                                index = UInt16.Parse(registerAndIndex[0]);
+                                index = Int16.Parse(registerAndIndex[0]);
                             }
 
                             instructionCode = (UInt16)(instructionCode | indexDestination);
                             instructionCode = (UInt16)(instructionCode | (mad << 4));
                             instructionCode = (UInt16)(instructionCode | (mas << 10));
 
+                            AddToOutput(instructionCode, index, operand);
                             Console.WriteLine(instructionCode);
                             Console.WriteLine(index);
                             Console.WriteLine(operand);
@@ -404,7 +416,7 @@ namespace Assembler
                             mas = 1;
                             mad = 3;
                             UInt16 indexDestination = 0;
-                            UInt16 index = 0;
+                            Int16 index = 0;
                             UInt16 indexSource = UInt16.Parse(words[2].Substring(1));
 
                             if (words[1].IndexOf('(') == 0)
@@ -412,13 +424,13 @@ namespace Assembler
                                 string test = words[1];
                                 string[] registerAndIndex = words[1].Split(')');
                                 indexDestination = UInt16.Parse(registerAndIndex[0].Substring(2));
-                                index = UInt16.Parse(registerAndIndex[1]);
+                                index = Int16.Parse(registerAndIndex[1]);
                             }
                             else
                             {
                                 string[] registerAndIndex = words[1].Split('(', ')');
                                 indexDestination = UInt16.Parse(registerAndIndex[1].Substring(1));
-                                index = UInt16.Parse(registerAndIndex[0]);
+                                index = Int16.Parse(registerAndIndex[0]);
                             }
 
                             instructionCode = (UInt16)(instructionCode | indexDestination);
@@ -426,6 +438,7 @@ namespace Assembler
                             instructionCode = (UInt16)(instructionCode | (indexSource << 6));
                             instructionCode = (UInt16)(instructionCode | (mas << 10));
 
+                            AddToOutput(instructionCode, index);
                             Console.WriteLine(instructionCode);
                             Console.WriteLine(index);
                             Console.WriteLine();
@@ -437,7 +450,7 @@ namespace Assembler
                             mas = 2;
                             mad = 3;
                             UInt16 indexDestination = 0;
-                            UInt16 index = 0;
+                            Int16 index = 0;
                             UInt16 indexSource = UInt16.Parse(registruSursa.Substring(1));
 
                             if (words[1].IndexOf('(') == 0)
@@ -445,13 +458,13 @@ namespace Assembler
                                 string test = words[1];
                                 string[] registerAndIndex = words[1].Split(')');
                                 indexDestination = UInt16.Parse(registerAndIndex[0].Substring(2));
-                                index = UInt16.Parse(registerAndIndex[1]);
+                                index = Int16.Parse(registerAndIndex[1]);
                             }
                             else
                             {
                                 string[] registerAndIndex = words[1].Split('(', ')');
                                 indexDestination = UInt16.Parse(registerAndIndex[1].Substring(1));
-                                index = UInt16.Parse(registerAndIndex[0]);
+                                index = Int16.Parse(registerAndIndex[0]);
                             }
 
                             instructionCode = (UInt16)(instructionCode | indexDestination);
@@ -459,47 +472,45 @@ namespace Assembler
                             instructionCode = (UInt16)(instructionCode | (indexSource << 6));
                             instructionCode = (UInt16)(instructionCode | (mas << 10));
 
+                            AddToOutput(instructionCode, index);
                             Console.WriteLine(instructionCode);
                             Console.WriteLine(index);
                             Console.WriteLine();
-
-
                         }
                         else if (words[1].Contains("(") && words[2].Contains("("))
                         {
                             mas = 3;
                             mad = 3;
                             UInt16 indexDestination = 0;
-                            UInt16 indexD = 0;
+                            Int16 indexD = 0;
                             UInt16 indexSource = 0;
-                            UInt16 indexS = 0;
+                            Int16 indexS = 0;
 
                             if (words[1].IndexOf('(') == 0)
                             {
                                 string test = words[1];
                                 string[] registerAndIndex = words[1].Split(')');
                                 indexDestination = UInt16.Parse(registerAndIndex[0].Substring(2));
-                                indexD = UInt16.Parse(registerAndIndex[1]);
+                                indexD = Int16.Parse(registerAndIndex[1]);
                             }
                             else
                             {
                                 string[] registerAndIndex = words[1].Split('(', ')');
                                 indexDestination = UInt16.Parse(registerAndIndex[1].Substring(1));
-                                indexD = UInt16.Parse(registerAndIndex[0]);
+                                indexD = Int16.Parse(registerAndIndex[0]);
                             }
-
 
                             if (words[2].IndexOf('(') == 0)
                             {
                                 string[] registerAndIndex = words[2].Split(')');
                                 indexSource = UInt16.Parse(registerAndIndex[0].Substring(2));
-                                indexS = UInt16.Parse(registerAndIndex[1]);
+                                indexS = Int16.Parse(registerAndIndex[1]);
                             }
                             else
                             {
                                 string[] registerAndIndex = words[2].Split('(', ')');
                                 indexSource = UInt16.Parse(registerAndIndex[1].Substring(1));
-                                indexS = UInt16.Parse(registerAndIndex[0]);
+                                indexS = Int16.Parse(registerAndIndex[0]);
                             }
 
                             instructionCode = (UInt16)(instructionCode | indexDestination);
@@ -508,6 +519,7 @@ namespace Assembler
                             instructionCode = (UInt16)(instructionCode | (mas << 10));
 
 
+                            AddToOutput(instructionCode, indexS, indexD);
                             Console.WriteLine(instructionCode);
                             Console.WriteLine(indexS);
                             Console.WriteLine(indexD);
@@ -540,6 +552,7 @@ namespace Assembler
                                 {
                                     instructionCode = (UInt16)(instructionCode | offset);
                                 }
+                                AddToOutput(instructionCode);
                                 Console.WriteLine(instructionCode);
                                 Console.WriteLine();
                             }
@@ -559,6 +572,7 @@ namespace Assembler
                                 {
                                     instructionCode = (UInt16)(instructionCode | offset);
                                 }
+                                AddToOutput(instructionCode);
                                 Console.WriteLine(instructionCode);
                                 Console.WriteLine();
                             }
@@ -566,8 +580,8 @@ namespace Assembler
                             {
                                 string label = words[1] + ":";
 
-                                var offset = BytesToLabel(label) - bytesFromStart;
-                                Console.WriteLine("Bytes from start : " + bytesFromStart);
+                                var offset = BytesToLabel(label) - m_bytesFromStart;
+                                Console.WriteLine("Bytes from start : " + m_bytesFromStart);
                                 Console.WriteLine("Bytes to label : " + BytesToLabel(label));
                                 Console.WriteLine("OFFSET : " + offset);
 
@@ -579,6 +593,7 @@ namespace Assembler
                                 {
                                     instructionCode = (UInt16)(instructionCode | offset);
                                 }
+                                AddToOutput(instructionCode);
                                 Console.WriteLine(instructionCode);
                                 Console.WriteLine();
                             }
@@ -594,7 +609,8 @@ namespace Assembler
 
                                 instructionCode = (UInt16)(instructionCode | indexDestination);
                                 instructionCode = (UInt16)(instructionCode | (mad << 4));
-
+                                
+                                AddToOutput(instructionCode);
                                 Console.WriteLine(instructionCode);
                                 Console.WriteLine();
                             }
@@ -607,6 +623,8 @@ namespace Assembler
 
                                 instructionCode = (UInt16)(instructionCode | indexDestination);
                                 instructionCode = (UInt16)(instructionCode | (mad << 4));
+
+                                AddToOutput(instructionCode);
                                 Console.WriteLine(instructionCode);
                                 Console.WriteLine();
                             }
@@ -615,23 +633,24 @@ namespace Assembler
                             {
                                 mad = 3;
                                 UInt16 indexDestination = 0;
-                                UInt16 index = 0;
+                                Int16 index = 0;
                                 if (words[1].IndexOf('(') == 0)
                                 {
                                     string[] registerAndIndex = words[1].Split(')');
                                     indexDestination = UInt16.Parse(registerAndIndex[0].Substring(2));
-                                    index = UInt16.Parse(registerAndIndex[1]);
+                                    index = Int16.Parse(registerAndIndex[1]);
                                 }
                                 else
                                 {
                                     string[] registerAndIndex = words[1].Split('(', ')');
                                     indexDestination = UInt16.Parse(registerAndIndex[1].Substring(1));
-                                    index = UInt16.Parse(registerAndIndex[0]);
+                                    index = Int16.Parse(registerAndIndex[0]);
                                 }
 
                                 instructionCode = (UInt16)(instructionCode | indexDestination);
                                 instructionCode = (UInt16)(instructionCode | (mad << 4));
 
+                                AddToOutput(instructionCode, index);
                                 Console.WriteLine(instructionCode);
                                 Console.WriteLine(index);
                                 Console.WriteLine();
@@ -642,9 +661,10 @@ namespace Assembler
                                 if (System.Text.RegularExpressions.Regex.IsMatch(words[1], @"^\d+H?$"))
                                 {
                                     mad = 0;
-                                    UInt16 operand = ResolveImmediateOperand(words[1]);
+                                    Int16 operand = ResolveImmediateOperand(words[1]);
                                     instructionCode = (UInt16)(instructionCode | (mad << 4));
 
+                                    AddToOutput(instructionCode, operand);
                                     Console.WriteLine(instructionCode);
                                     Console.WriteLine(operand);
                                     Console.WriteLine();
@@ -661,6 +681,7 @@ namespace Assembler
                                             mad = 0;
                                             instructionCode = (UInt16)(instructionCode | (mad << 4));
 
+                                            AddToOutput(instructionCode, adrOperand);
                                             Console.WriteLine(instructionCode);
                                             Console.WriteLine(adrOperand);
                                             Console.WriteLine();
@@ -675,6 +696,7 @@ namespace Assembler
                                             mad = 0;
                                             instructionCode = (UInt16)(instructionCode | (mad << 4));
 
+                                            AddToOutput(instructionCode, adrOperand);
                                             Console.WriteLine(instructionCode);
                                             Console.WriteLine(adrOperand);
                                             Console.WriteLine();
@@ -686,16 +708,17 @@ namespace Assembler
                     }
                     else if (words.Length == 1)
                     {
+                        AddToOutput(instructionCode);
                         Console.WriteLine(instructionCode);
                         Console.WriteLine();
                     }
                     if (mas == 0 || mas == 3)
                     {
-                        bytesFromStart += 2;
+                        m_bytesFromStart += 2;
                     }
                     if (mad == 0 || mad == 3)
                     {
-                        bytesFromStart += 2;
+                        m_bytesFromStart += 2;
                     }
                 }
                 else
@@ -705,11 +728,13 @@ namespace Assembler
                 }
                 lineNumber++;
             }
+
+            File.WriteAllBytes(m_outputFilePath, m_output.ToArray());
         }
     
-        private int BytesToLabel(string label)
+        private Int16 BytesToLabel(string label)
         {
-            string[] lines = File.ReadAllLines(m_path);
+            string[] lines = File.ReadAllLines(m_inputFilePath);
             StringCollection instructions = new StringCollection();
             instructions.AddRange(m_instructions);
 
@@ -719,7 +744,7 @@ namespace Assembler
                 lines[i] = lines[i].Trim();
             }
 
-            var bytes = 0;
+            Int16 bytes = 0;
             bool labelFound = false;
             foreach (string line in lines)
             {
@@ -762,12 +787,11 @@ namespace Assembler
             {
                 return -1;
             }
-
         }
 
-        private int BytesToProc(string proc)
+        private Int16 BytesToProc(string proc)
         {
-            string[] lines = File.ReadAllLines(m_path);
+            string[] lines = File.ReadAllLines(m_inputFilePath);
             StringCollection instructions = new StringCollection();
             instructions.AddRange(m_instructions);
 
@@ -777,7 +801,7 @@ namespace Assembler
                 lines[i] = lines[i].Trim();
             }
 
-            var bytes = 0;
+            Int16 bytes = 0;
             bool procFound = false;
             foreach (string line in lines)
             {
@@ -817,26 +841,49 @@ namespace Assembler
             {
                 return -1;
             }
+        }
 
+        private void AddToOutput(UInt16 instructionCode, Int16 operand1 = Int16.MaxValue, Int16 operand2 = Int16.MaxValue)
+        {
+            byte high, low;
+
+            high = (byte)(instructionCode >> 8);
+            low = (byte)(instructionCode & 0x00FF);
+            m_output.Add(high);
+            m_output.Add(low);
+
+            if (operand1 != Int16.MaxValue)
+            {
+                high = (byte)(operand1 >> 8);
+                low = (byte)(operand1 & 0x00FF);
+                m_output.Add(high);
+                m_output.Add(low);
+            }
+
+            if (operand2 != Int16.MaxValue)
+            {
+                high = (byte)(operand2 >> 8);
+                low = (byte)(operand2 & 0x00FF);
+                m_output.Add(high);
+                m_output.Add(low);
+            }
         }
 
         // Prelucreaza o valoare imediata data in decimal/hexa si returneaza valoare in decimal
-        private UInt16 ResolveImmediateOperand(string operand)
+        private Int16 ResolveImmediateOperand(string operand)
         {
             if (System.Text.RegularExpressions.Regex.IsMatch(operand, @"^\d+H$"))
             {
                 string operandStr = operand.Remove(operand.Length - 1, 1);
-                return Convert.ToUInt16(operandStr, 16);
+                return Convert.ToInt16(operandStr, 16);
 
             }
             // decimal immediate value
             else if (System.Text.RegularExpressions.Regex.IsMatch(operand, @"^\d+$"))
             {
-                return Convert.ToUInt16(operand, 10);
+                return Convert.ToInt16(operand, 10);
             }
-            return UInt16.MaxValue;
+            return Int16.MaxValue;
         }
     }
-
-
 }
