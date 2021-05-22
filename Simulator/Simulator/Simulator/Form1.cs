@@ -1,12 +1,17 @@
 ﻿using System;
+using System.IO;
 using System.Windows.Forms;
 
 namespace Simulator
 {
     public partial class Form1 : Form
     {
+        
         private string asmFile = "";
         private string binFile = "";
+        Simulator simulator;
+
+
         public Form1()
         {
             InitializeComponent();
@@ -59,6 +64,66 @@ namespace Simulator
         {
             asmFile = "";
             binFile = "";
+        }
+
+        private void compileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            simulator = new Simulator(binFile);
+
+        }
+
+        private void stepToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if(Simulator.instructionCode == 57357) //HALT 
+            {
+                MessageBox.Show("END");
+            }
+            else if(simulator.compiled == true)
+            {
+                simulator.impulseGenerator();
+                LOG(Simulator.currentPhase + " " + Simulator.currentImpulse);
+            }
+            else
+            {
+                LOG("Program not compiled!!");
+            }
+
+            Refresh();
+        
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label7_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void runUntilEndToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+
+
+            while(Simulator.instructionCode != 57357) //HALT 
+            {
+                if (simulator.compiled == true)
+                {
+                    simulator.impulseGenerator();
+                    LOG(Simulator.currentPhase + " " + Simulator.currentImpulse);
+                }
+
+                
+            
+            }
+            
+            MessageBox.Show("END");
+
+            Refresh();
+
         }
     }
 }
