@@ -701,9 +701,10 @@ namespace Simulator
             // lRegisterss
             // 
             this.lRegisterss.AutoSize = true;
+            this.lRegisterss.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lRegisterss.Location = new System.Drawing.Point(801, 62);
             this.lRegisterss.Name = "lRegisterss";
-            this.lRegisterss.Size = new System.Drawing.Size(107, 13);
+            this.lRegisterss.Size = new System.Drawing.Size(109, 15);
             this.lRegisterss.TabIndex = 44;
             this.lRegisterss.Text = "No program compiled";
             // 

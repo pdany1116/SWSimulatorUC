@@ -13,6 +13,7 @@ namespace Simulator
     {
         public bool compiled = false;
 
+        #region memory
         public static byte[] instructionMemory = new byte[10000]; // instruction memory
         /// <summary>
         /// from 0 -> 10000 instruction memory
@@ -20,7 +21,9 @@ namespace Simulator
         /// the rest is stack memory
         /// </summary>
         public static byte[] Memory = new byte[65536];
+        #endregion
 
+        #region variables 
         public static byte FLAG; //7 - x, 6 - x, 5 - x, 4 - x, 3 - OF, 2 - Z, 1 - C, 0 - S
         public static ushort PC, DBUS, T, IVR, ADR, MDR, IR, RBUS, SBUS, ALU;
         public static ushort SP = 65535;
@@ -31,7 +34,9 @@ namespace Simulator
         public static bool PdALU, PmFLAG, PmFLAGCond, PdFLAG_DBUS, PdFLAG_SBUS, PdRG_DBUS, PdRG_SBUS, PmRG, PmSP, PdSP_DBUS, PdSP_SBUS, PmT, PdT_DBUS, PdT_SBUS,
                     PdPC_SBUS, PdPC_DBUS, PmPC, PmADR, PdADR_DBUS, PdADR_SBUS, PmMDR, PdMDR_DBUS, PdMDR_SBUS, PmIR, PdIR_SBUS, PdIR_DBUS, RD, DDBUS, SSBUS, PdADR, WR,
                     PdMDR, PdIVR_DBUS, PdIVR_SBUS, PmIVR;
-       
+        #endregion
+
+        #region informations from decoding
         // public static bool PdPC, 
         // all for current instruction in the program
         public static ushort instructionClass; // 0 - 2 operand, 1 - 1 operand, 2 - jump/branch, 3 - others
@@ -42,16 +47,19 @@ namespace Simulator
         public static ushort destinationRegister;
         public static ushort offset;
 
+        //indexes or operands after instruction codes in memory
         public static ushort immediateOperand;
         public static ushort index;
+        public static ushort instructionCode;
+        #endregion
+
+        #region generators conditions
+        //conditions for phase generator
+        public bool TINT, TIF, TOF, TEX;
 
         public static ushort currentPhase;  // 0 - no phase, 1 - instruction fetch, 2 - operand fetch, 3 - execution, 4 - interrupt
         public static ushort currentImpulse; // from 1 to n 
-
-        // conditions for phase generator
-        public bool TINT, TIF, TOF, TEX;
-
-        public static ushort instructionCode;
+        #endregion
 
         public Simulator(string file)
         {
@@ -67,7 +75,7 @@ namespace Simulator
             compiled = true;
 
         }
-
+        
         public void decoder(ushort instructionCode)
         {
             
@@ -109,7 +117,6 @@ namespace Simulator
             }
         }
 
-
         public void phase_generator()
         {
             
@@ -139,8 +146,7 @@ namespace Simulator
             }
             
         }
-
-        
+ 
         public void impulseGenerator()
         {
             if(currentPhase == 0)
@@ -153,6 +159,7 @@ namespace Simulator
             {
                 // IF
                 case 1:
+                    #region IF impulses
                     if (currentImpulse == 0)
                     {
                         resetCLE();
@@ -211,10 +218,11 @@ namespace Simulator
                         phase_generator();
 
                     }
+                    #endregion
                     break;
                 // OF
                 case 2:
-
+                    #region OF impulses
                     switch (instructionClass)
                     {
 
@@ -363,11 +371,11 @@ namespace Simulator
                             break;
 
                     }
-
+                    #endregion
                     break;
                 //EX
                 case 3:
-
+                    #region EX impulses
                     switch (opcode)
                     {
                         case 0:
@@ -408,10 +416,12 @@ namespace Simulator
                             break;
 
                     }
+                    #endregion
                     break;
                 //TINT
                 case 4:
-                    if(currentImpulse == 1)
+                    #region INT impulses
+                    if (currentImpulse == 1)
                     {
                         resetCLE();
 
@@ -531,15 +541,15 @@ namespace Simulator
 
                     //    TIF = true;
                     //    phase_generator();
-                        
+
                     //}
-                    
+                    #endregion-
                     break;
+
             }
 
 
         }
-
 
         public void OF_phase_destination_AD()
         {
@@ -1359,7 +1369,8 @@ namespace Simulator
             PmFLAGCond = false;
 
         }
-
+       
+        #region execution functions for 2 operands
         public void EX_phase_MOV()
         {
             switch (mad)
@@ -2572,6 +2583,8 @@ namespace Simulator
             }
 
         }
+
+        #endregion
 
         private void setting_FLAG_bits(ushort RBUS, ushort DBUS, ushort SBUS)
         {

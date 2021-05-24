@@ -90,9 +90,10 @@ namespace Simulator
             }
             else if(simulator.compiled == true)
             {
+                LOG(Simulator.currentPhase + " " + Simulator.currentImpulse);
                 simulator.impulseGenerator();
                 refreshValues();
-                LOG(Simulator.currentPhase + " " + Simulator.currentImpulse);
+                
                 setRedLines();
             }
             else
