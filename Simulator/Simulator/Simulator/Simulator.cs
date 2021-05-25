@@ -2586,6 +2586,240 @@ namespace Simulator
 
         #endregion
 
+        #region execution functions for 1 operand
+
+        #endregion
+
+        #region functions for branch
+        #endregion
+
+        #region functions for others
+
+        public void EX_phase_CLC()
+        {
+            if(currentImpulse == 1)
+            {
+                resetCLE();
+
+                DBUS = FLAG; //pdFlag
+                ALU = DBUS; // DDBUS
+
+                FLAG = (byte)(FLAG & ~(1 << 1)); //pmFlagCond
+
+                PdFLAG_DBUS = true;
+                DDBUS = true;
+                PmFLAGCond = true;
+
+                TIF = true;
+                phase_generator();
+
+            }
+
+        }
+
+        public void EX_phase_CLZ()
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                DBUS = FLAG; //pdFlag
+                ALU = DBUS; // DDBUS
+
+                FLAG = (byte)(FLAG & ~(1 << 2)); //pmFlagCond
+
+                PdFLAG_DBUS = true;
+                DDBUS = true;
+                PmFLAGCond = true;
+
+                TIF = true;
+                phase_generator();
+
+            }
+
+        }
+
+        //overflow
+        public void EX_phase_CLV() 
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                DBUS = FLAG; //pdFlag
+                ALU = DBUS; // DDBUS
+
+                FLAG = (byte)(FLAG & ~(1 << 3)); //pmFlagCond
+
+                PdFLAG_DBUS = true;
+                DDBUS = true;
+                PmFLAGCond = true;
+
+                TIF = true;
+                phase_generator();
+
+            }
+
+        }
+
+        public void EX_phase_CLS()
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                DBUS = FLAG; //pdFlag
+                ALU = DBUS; // DDBUS
+
+                FLAG = (byte)(FLAG & ~(1)); //pmFlagCond
+
+                PdFLAG_DBUS = true;
+                DDBUS = true;
+                PmFLAGCond = true;
+
+                TIF = true;
+                phase_generator();
+
+            }
+
+        }
+
+        public void EX_phase_SEC()
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                DBUS = FLAG; //pdFlag
+                ALU = DBUS; // DDBUS
+
+                FLAG = (byte)(FLAG | (1 << 1)); //pmFlagCond
+
+                PdFLAG_DBUS = true;
+                DDBUS = true;
+                PmFLAGCond = true;
+
+                TIF = true;
+                phase_generator();
+
+            }
+
+        }
+
+        public void EX_phase_SEZ()
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                DBUS = FLAG; //pdFlag
+                ALU = DBUS; // DDBUS
+
+                FLAG = (byte)(FLAG | (1 << 2)); //pmFlagCond
+
+                PdFLAG_DBUS = true;
+                DDBUS = true;
+                PmFLAGCond = true;
+
+                TIF = true;
+                phase_generator();
+
+            }
+
+        }
+        //overflow
+        public void EX_phase_SEV()
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                DBUS = FLAG; //pdFlag
+                ALU = DBUS; // DDBUS
+
+                FLAG = (byte)(FLAG | (1 << 3)); //pmFlagCond
+
+                PdFLAG_DBUS = true;
+                DDBUS = true;
+                PmFLAGCond = true;
+
+                TIF = true;
+                phase_generator();
+
+            }
+
+        }
+
+        public void EX_phase_SES()
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                DBUS = FLAG; //pdFlag
+                ALU = DBUS; // DDBUS
+
+                FLAG = (byte)(FLAG | (1)); //pmFlagCond
+
+                PdFLAG_DBUS = true;
+                DDBUS = true;
+                PmFLAGCond = true;
+
+                TIF = true;
+                phase_generator();
+
+            }
+
+        }
+
+        public void EX_phase_SCC()
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                DBUS = FLAG; //pdFlag
+                ALU = DBUS; // DDBUS
+
+                FLAG = (byte)(FLAG | 15); //pmFlagCond
+
+                PdFLAG_DBUS = true;
+                DDBUS = true;
+                PmFLAGCond = true;
+
+                TIF = true;
+                phase_generator();
+
+            }
+
+        }
+
+        public void EX_phase_CCC()
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                DBUS = FLAG; //pdFlag
+                ALU = DBUS; // DDBUS
+
+                FLAG = (byte)(FLAG & 0
+); //pmFlagCond
+
+                PdFLAG_DBUS = true;
+                DDBUS = true;
+                PmFLAGCond = true;
+
+                TIF = true;
+                phase_generator();
+
+            }
+
+        }
+
+
+        #endregion
+
         private void setting_FLAG_bits(ushort RBUS, ushort DBUS, ushort SBUS)
         {
 
