@@ -543,7 +543,7 @@ namespace Simulator
                     //    phase_generator();
 
                     //}
-                    #endregion-
+                    #endregion
                     break;
 
             }
@@ -551,6 +551,7 @@ namespace Simulator
 
         }
 
+        #region OF functions for 2 operands
         public void OF_phase_destination_AD()
         {
 
@@ -1330,46 +1331,8 @@ namespace Simulator
 
         }
 
-        //resetam comenzile logice elementare
-        public void resetCLE()
-        {
-
-            PdALU = false;
-            PmFLAG = false;
-            PmFLAGCond = false;
-            PdFLAG_DBUS = false;
-            PdFLAG_SBUS = false;
-            PdRG_DBUS = false;
-            PdRG_SBUS = false;
-            PmRG = false;
-            PmSP = false;
-            PdSP_DBUS = false;
-            PdSP_SBUS = false;
-            PmT = false;
-            PdT_DBUS = false;
-            PdT_SBUS = false;
-            PdPC_SBUS = false;
-            PdPC_DBUS = false;
-            PmPC = false;
-            PmADR = false;
-            PdADR_DBUS = false;
-            PdADR_SBUS = false;
-            PmMDR = false;
-            PdMDR_DBUS = false;
-            PdMDR_SBUS = false;
-            PmIR = false;
-            PdIR_SBUS = false;
-            PdIR_DBUS = false;
-            RD = false;
-            DDBUS = false;
-            SSBUS = false;
-            PdIVR_DBUS = false;
-            PdIVR_SBUS = false;
-            WR = false;
-            PmFLAGCond = false;
-
-        }
-       
+        #endregion
+              
         #region execution functions for 2 operands
         public void EX_phase_MOV()
         {
@@ -1465,67 +1428,7 @@ namespace Simulator
             }
         }
 
-        public void EX_phase_RETI()
-        {
-            if(currentImpulse == 1)
-            {
-                resetCLE();
-
-                Form1.interruptCheck = false;
-
-                SBUS = SP; //pdSP
-                ALU = SBUS; //SSBUS
-                RBUS = ALU; // pdALU
-                ADR = RBUS; //pmADR
-
-                currentImpulse = 2;
-            }
-            else if( currentImpulse == 2)
-            {
-                resetCLE();
-
-                RBUS = (ushort)((ushort)((ushort)Memory[SP] << 8) | (ushort)Memory[SP + 1]); //RD, pdADR
-                PC = RBUS; //PmPC
-
-                SP = (ushort)(SP + 2);
-
-                RD = true;
-                PdADR = true;
-                PmPC = true;
-
-                currentImpulse = 3;
-
-            }
-            else if(currentImpulse == 3)
-            {
-                resetCLE();
-
-                SBUS = SP; //pdSP
-                ALU = SBUS; //SSBUS
-                RBUS = ALU; // pdALU
-                ADR = RBUS; //pmADR
-
-                currentImpulse = 4;
-
-            }
-            else if (currentImpulse == 4)
-            {
-                resetCLE();
-
-                RBUS = (ushort)((ushort)((ushort)Memory[SP] << 8) | (ushort)Memory[SP + 1]); //RD, pdADR
-                FLAG = (byte)RBUS; //PmFLAG
-
-                SP = (ushort)(SP + 2);
-
-                RD = true;
-                PdADR = true;
-                PmFLAG = true;
-
-                TIF = true;
-                phase_generator();
-            }
-        }
-
+        
         public void EX_phase_ADD()
         {
             switch (mad)
@@ -2591,6 +2494,516 @@ namespace Simulator
         #endregion
 
         #region functions for branch
+
+        private void EX_phase_BR()
+        {
+
+            if(currentImpulse == 1)
+            {
+                resetCLE();
+
+                SBUS = IR; //pdIR
+                ALU = offset; //(SBUS & 127)
+                RBUS = ALU; //pdalu
+                T = RBUS;
+
+                PdIR_SBUS = true;
+                SSBUS = true;
+                PdALU = true;
+                PmT = true;
+            }
+            else if(currentImpulse == 2)
+            {
+                resetCLE();
+
+                DBUS = PC; //pdPC
+                SBUS = T; //pdT
+                ALU = (ushort)(SBUS + DBUS);
+                RBUS = ALU; //pdalu
+                PC = ALU;
+
+                PdPC_DBUS = true;
+                PdT_SBUS = true;
+                SSBUS = true;
+                DDBUS = true;
+                PdALU = true;
+                PmPC = true;
+
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+
+        }
+
+
+        private void EX_phase_BNE()
+        {
+
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                if((FLAG & (1<<2)) == 0)
+                {
+                    SBUS = IR; //pdIR
+                    ALU = offset; //(SBUS & 127)
+                    RBUS = ALU; //pdalu
+                    T = RBUS;
+
+                    PdIR_SBUS = true;
+                    SSBUS = true;
+                    PdALU = true;
+                    PmT = true;
+                }
+                
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                if ((FLAG & (1 << 2)) == 0)
+                {
+                    DBUS = PC; //pdPC
+                    SBUS = T; //pdT
+                    ALU = (ushort)(SBUS + DBUS);
+                    RBUS = ALU; //pdalu
+                    PC = ALU;
+
+                    PdPC_DBUS = true;
+                    PdT_SBUS = true;
+                    SSBUS = true;
+                    DDBUS = true;
+                    PdALU = true;
+                    PmPC = true;
+
+                }
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+
+        }
+
+        private void EX_phase_BEQ()
+        {
+
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                if ((FLAG & (1 << 2)) == 4)
+                {
+                    SBUS = IR; //pdIR
+                    ALU = offset; //(SBUS & 127)
+                    RBUS = ALU; //pdalu
+                    T = RBUS;
+
+                    PdIR_SBUS = true;
+                    SSBUS = true;
+                    PdALU = true;
+                    PmT = true;
+                }
+
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                if ((FLAG & (1 << 2)) == 4)
+                {
+                    DBUS = PC; //pdPC
+                    SBUS = T; //pdT
+                    ALU = (ushort)(SBUS + DBUS);
+                    RBUS = ALU; //pdalu
+                    PC = ALU;
+
+                    PdPC_DBUS = true;
+                    PdT_SBUS = true;
+                    SSBUS = true;
+                    DDBUS = true;
+                    PdALU = true;
+                    PmPC = true;
+
+                }
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+
+        }
+
+
+        private void EX_phase_BPL()
+        {
+
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                if ((FLAG & (1)) == 0)
+                {
+                    SBUS = IR; //pdIR
+                    ALU = offset; //(SBUS & 127)
+                    RBUS = ALU; //pdalu
+                    T = RBUS;
+
+                    PdIR_SBUS = true;
+                    SSBUS = true;
+                    PdALU = true;
+                    PmT = true;
+                }
+
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                if ((FLAG & (1)) == 0)
+                {
+                    DBUS = PC; //pdPC
+                    SBUS = T; //pdT
+                    ALU = (ushort)(SBUS + DBUS);
+                    RBUS = ALU; //pdalu
+                    PC = ALU;
+
+                    PdPC_DBUS = true;
+                    PdT_SBUS = true;
+                    SSBUS = true;
+                    DDBUS = true;
+                    PdALU = true;
+                    PmPC = true;
+
+                }
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+
+        }
+
+        private void EX_phase_BMI()
+        {
+
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                if ((FLAG & (1)) == 1)
+                {
+                    SBUS = IR; //pdIR
+                    ALU = offset; //(SBUS & 127)
+                    RBUS = ALU; //pdalu
+                    T = RBUS;
+
+                    PdIR_SBUS = true;
+                    SSBUS = true;
+                    PdALU = true;
+                    PmT = true;
+                }
+
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                if ((FLAG & (1)) == 1)
+                {
+                    DBUS = PC; //pdPC
+                    SBUS = T; //pdT
+                    ALU = (ushort)(SBUS + DBUS);
+                    RBUS = ALU; //pdalu
+                    PC = ALU;
+
+                    PdPC_DBUS = true;
+                    PdT_SBUS = true;
+                    SSBUS = true;
+                    DDBUS = true;
+                    PdALU = true;
+                    PmPC = true;
+
+                }
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+
+        }
+
+
+        private void EX_phase_BCS()
+        {
+
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                if ((FLAG & (1<<1)) == 2)
+                {
+                    SBUS = IR; //pdIR
+                    ALU = offset; //(SBUS & 127)
+                    RBUS = ALU; //pdalu
+                    T = RBUS;
+
+                    PdIR_SBUS = true;
+                    SSBUS = true;
+                    PdALU = true;
+                    PmT = true;
+                }
+
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                if ((FLAG & (1<<1)) == 2)
+                {
+                    DBUS = PC; //pdPC
+                    SBUS = T; //pdT
+                    ALU = (ushort)(SBUS + DBUS);
+                    RBUS = ALU; //pdalu
+                    PC = ALU;
+
+                    PdPC_DBUS = true;
+                    PdT_SBUS = true;
+                    SSBUS = true;
+                    DDBUS = true;
+                    PdALU = true;
+                    PmPC = true;
+
+                }
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+
+        }
+
+        private void EX_phase_BCC()
+        {
+
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                if ((FLAG & (1<<1)) == 0)
+                {
+                    SBUS = IR; //pdIR
+                    ALU = offset; //(SBUS & 127)
+                    RBUS = ALU; //pdalu
+                    T = RBUS;
+
+                    PdIR_SBUS = true;
+                    SSBUS = true;
+                    PdALU = true;
+                    PmT = true;
+                }
+
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                if ((FLAG & (1<<1)) == 0)
+                {
+                    DBUS = PC; //pdPC
+                    SBUS = T; //pdT
+                    ALU = (ushort)(SBUS + DBUS);
+                    RBUS = ALU; //pdalu
+                    PC = ALU;
+
+                    PdPC_DBUS = true;
+                    PdT_SBUS = true;
+                    SSBUS = true;
+                    DDBUS = true;
+                    PdALU = true;
+                    PmPC = true;
+
+                }
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+
+        }
+
+        private void EX_phase_BVS()
+        {
+
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                if ((FLAG & (1<<3)) == 8)
+                {
+                    SBUS = IR; //pdIR
+                    ALU = offset; //(SBUS & 127)
+                    RBUS = ALU; //pdalu
+                    T = RBUS;
+
+                    PdIR_SBUS = true;
+                    SSBUS = true;
+                    PdALU = true;
+                    PmT = true;
+                }
+
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                if ((FLAG & (1<<3)) == 8)
+                {
+                    DBUS = PC; //pdPC
+                    SBUS = T; //pdT
+                    ALU = (ushort)(SBUS + DBUS);
+                    RBUS = ALU; //pdalu
+                    PC = ALU;
+
+                    PdPC_DBUS = true;
+                    PdT_SBUS = true;
+                    SSBUS = true;
+                    DDBUS = true;
+                    PdALU = true;
+                    PmPC = true;
+
+                }
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+
+        }
+
+        private void EX_phase_BVC()
+        {
+
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                if ((FLAG & (1<<3)) == 0)
+                {
+                    SBUS = IR; //pdIR
+                    ALU = offset; //(SBUS & 127)
+                    RBUS = ALU; //pdalu
+                    T = RBUS;
+
+                    PdIR_SBUS = true;
+                    SSBUS = true;
+                    PdALU = true;
+                    PmT = true;
+                }
+
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                if ((FLAG & (1<<3)) == 0)
+                {
+                    DBUS = PC; //pdPC
+                    SBUS = T; //pdT
+                    ALU = (ushort)(SBUS + DBUS);
+                    RBUS = ALU; //pdalu
+                    PC = ALU;
+
+                    PdPC_DBUS = true;
+                    PdT_SBUS = true;
+                    SSBUS = true;
+                    DDBUS = true;
+                    PdALU = true;
+                    PmPC = true;
+
+                }
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+
+        }
+
         #endregion
 
         #region functions for others
@@ -2610,7 +3023,16 @@ namespace Simulator
                 DDBUS = true;
                 PmFLAGCond = true;
 
-                TIF = true;
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+               
                 phase_generator();
 
             }
@@ -2632,7 +3054,16 @@ namespace Simulator
                 DDBUS = true;
                 PmFLAGCond = true;
 
-                TIF = true;
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                
                 phase_generator();
 
             }
@@ -2655,7 +3086,15 @@ namespace Simulator
                 DDBUS = true;
                 PmFLAGCond = true;
 
-                TIF = true;
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
                 phase_generator();
 
             }
@@ -2677,7 +3116,15 @@ namespace Simulator
                 DDBUS = true;
                 PmFLAGCond = true;
 
-                TIF = true;
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
                 phase_generator();
 
             }
@@ -2699,7 +3146,15 @@ namespace Simulator
                 DDBUS = true;
                 PmFLAGCond = true;
 
-                TIF = true;
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
                 phase_generator();
 
             }
@@ -2721,7 +3176,15 @@ namespace Simulator
                 DDBUS = true;
                 PmFLAGCond = true;
 
-                TIF = true;
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
                 phase_generator();
 
             }
@@ -2743,7 +3206,15 @@ namespace Simulator
                 DDBUS = true;
                 PmFLAGCond = true;
 
-                TIF = true;
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
                 phase_generator();
 
             }
@@ -2765,7 +3236,15 @@ namespace Simulator
                 DDBUS = true;
                 PmFLAGCond = true;
 
-                TIF = true;
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
                 phase_generator();
 
             }
@@ -2787,7 +3266,15 @@ namespace Simulator
                 DDBUS = true;
                 PmFLAGCond = true;
 
-                TIF = true;
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
                 phase_generator();
 
             }
@@ -2803,20 +3290,388 @@ namespace Simulator
                 DBUS = FLAG; //pdFlag
                 ALU = DBUS; // DDBUS
 
-                FLAG = (byte)(FLAG & 0
-); //pmFlagCond
+                FLAG = (byte)(FLAG & 0); //pmFlagCond
 
                 PdFLAG_DBUS = true;
                 DDBUS = true;
                 PmFLAGCond = true;
 
-                TIF = true;
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
                 phase_generator();
 
             }
 
         }
 
+        private void EX_phase_NOP()
+        {
+            if(currentImpulse == 1)
+            {
+                resetCLE();
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+
+        }
+
+        public void EX_phase_RETI()
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                Form1.interruptCheck = false;
+
+                SBUS = SP; //pdSP
+                ALU = SBUS; //SSBUS
+                RBUS = ALU; // pdALU
+                ADR = RBUS; //pmADR
+
+                PdSP_SBUS = true;
+                SSBUS = true;
+                PdALU = true;
+                PmADR = true;
+
+                currentImpulse = 2;
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                RBUS = (ushort)((ushort)((ushort)Memory[ADR] << 8) | (ushort)Memory[ADR + 1]); //RD, pdADR
+                PC = RBUS; //PmPC
+
+                SP = (ushort)(SP + 2);
+
+                RD = true;
+                PdADR = true;
+                PmPC = true;
+
+                currentImpulse = 3;
+
+            }
+            else if (currentImpulse == 3)
+            {
+                resetCLE();
+
+                SBUS = SP; //pdSP
+                ALU = SBUS; //SSBUS
+                RBUS = ALU; // pdALU
+                ADR = RBUS; //pmADR
+
+                PdSP_SBUS = true;
+                SSBUS = true;
+                PdALU = true;
+                PmADR = true;
+
+                currentImpulse = 4;
+
+            }
+            else if (currentImpulse == 4)
+            {
+                resetCLE();
+
+                RBUS = (ushort)((ushort)((ushort)Memory[SP] << 8) | (ushort)Memory[SP + 1]); //RD, pdADR
+                FLAG = (byte)RBUS; //PmFLAG
+
+                SP = (ushort)(SP + 2);
+
+                RD = true;
+                PdADR = true;
+                PmFLAG = true;
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+            }
+        }
+
+        public void EX_phase_RET()
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                SBUS = SP; //pdSP
+                ALU = SBUS; //SSBUS
+                RBUS = ALU; // pdALU
+                ADR = RBUS; //pmADR
+
+                PdSP_SBUS = true;
+                SSBUS = true;
+                PdALU = true;
+                PmADR = true;
+
+                currentImpulse = 2;
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                RBUS = (ushort)((ushort)((ushort)Memory[ADR] << 8) | (ushort)Memory[ADR + 1]); //RD, pdADR
+                PC = RBUS; //PmPC
+
+                SP = (ushort)(SP + 2);
+
+                RD = true;
+                PdADR = true;
+                PmPC = true;
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+        }
+
+        private void EX_phase_PUSHPC()
+        {
+
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                SP = (ushort)(SP - 2);
+
+                currentImpulse = 2;
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                SBUS = SP; // pdsp
+                ALU = SBUS; //ssbus
+                RBUS = ALU; // pdalu
+                ADR = RBUS; //pmADR
+
+                PdSP_SBUS = true;
+                SSBUS = true;
+                PdALU = true;
+                PmADR = true;
+
+                currentImpulse = 3;
+
+            }
+            else if (currentImpulse == 3)
+            {
+                resetCLE();
+
+                SBUS = PC; //pdFLAGS_SBUS
+                ALU = SBUS; //ssbus
+                RBUS = ALU; // pdalu
+
+                Memory[SP] = (byte)(RBUS >> 8);
+                Memory[SP + 1] = (byte)(RBUS); //WR
+
+                SP = (ushort)(SP - 2);
+
+
+                PdPC_SBUS = true;
+                SSBUS = true;
+                PdALU = true;
+                WR = true;
+                PdADR = true;
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+
+        }
+
+        private void EX_phase_PUSHFLAG()
+        {
+
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                SP = (ushort)(SP - 2);
+
+                currentImpulse = 2;
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                SBUS = SP; // pdsp
+                ALU = SBUS; //ssbus
+                RBUS = ALU; // pdalu
+                ADR = RBUS; //pmADR
+
+                PdSP_SBUS = true;
+                SSBUS = true;
+                PdALU = true;
+                PmADR = true;
+
+                currentImpulse = 3;
+
+            }
+            else if (currentImpulse == 3)
+            {
+                resetCLE();
+
+                SBUS = FLAG; //pdFLAGS_SBUS
+                ALU = SBUS; //ssbus
+                RBUS = ALU; // pdalu
+
+                Memory[SP] = (byte)(RBUS >> 8);
+                Memory[SP + 1] = (byte)(RBUS); //WR
+
+                SP = (ushort)(SP - 2);
+
+
+                PdFLAG_SBUS = true;
+                SSBUS = true;
+                PdALU = true;
+                WR = true;
+                PdADR = true;
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+
+        }
+
+        public void EX_phase_POPPC()
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                SBUS = SP; //pdSP
+                ALU = SBUS; //SSBUS
+                RBUS = ALU; // pdALU
+                ADR = RBUS; //pmADR
+
+                PdSP_SBUS = true;
+                SSBUS = true;
+                PdALU = true;
+                PmADR = true;
+
+
+                currentImpulse = 2;
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                RBUS = (ushort)((ushort)((ushort)Memory[ADR] << 8) | (ushort)Memory[ADR + 1]); //RD, pdADR
+                PC = RBUS; //PmPC
+
+                SP = (ushort)(SP + 2);
+
+                RD = true;
+                PdADR = true;
+                PmPC = true;
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+        }
+
+        public void EX_phase_POPFLAG()
+        {
+            if (currentImpulse == 1)
+            {
+                resetCLE();
+
+                SBUS = SP; //pdSP
+                ALU = SBUS; //SSBUS
+                RBUS = ALU; // pdALU
+                ADR = RBUS; //pmADR
+
+                PdSP_SBUS = true;
+                SSBUS = true;
+                PdALU = true;
+                PmADR = true;
+
+                currentImpulse = 2;
+            }
+            else if (currentImpulse == 2)
+            {
+                resetCLE();
+
+                RBUS = (ushort)((ushort)((ushort)Memory[ADR] << 8) | (ushort)Memory[ADR + 1]); //RD, pdADR
+                FLAG = (byte)RBUS; //PmPC
+
+                SP = (ushort)(SP + 2);
+
+                RD = true;
+                PdADR = true;
+                PmFLAG = true;
+
+                if (Form1.interruptCheck == true)
+                {
+                    TINT = true;
+                }
+                else
+                {
+                    TIF = true;
+                }
+
+                phase_generator();
+
+            }
+        }
 
         #endregion
 
@@ -2858,6 +3713,46 @@ namespace Simulator
             {
                 FLAG = (byte)(FLAG & ~(1 << 1));
             }
+
+        }
+
+        //resetam comenzile logice elementare
+        public void resetCLE()
+        {
+
+            PdALU = false;
+            PmFLAG = false;
+            PmFLAGCond = false;
+            PdFLAG_DBUS = false;
+            PdFLAG_SBUS = false;
+            PdRG_DBUS = false;
+            PdRG_SBUS = false;
+            PmRG = false;
+            PmSP = false;
+            PdSP_DBUS = false;
+            PdSP_SBUS = false;
+            PmT = false;
+            PdT_DBUS = false;
+            PdT_SBUS = false;
+            PdPC_SBUS = false;
+            PdPC_DBUS = false;
+            PmPC = false;
+            PmADR = false;
+            PdADR_DBUS = false;
+            PdADR_SBUS = false;
+            PmMDR = false;
+            PdMDR_DBUS = false;
+            PdMDR_SBUS = false;
+            PmIR = false;
+            PdIR_SBUS = false;
+            PdIR_DBUS = false;
+            RD = false;
+            DDBUS = false;
+            SSBUS = false;
+            PdIVR_DBUS = false;
+            PdIVR_SBUS = false;
+            WR = false;
+            PmFLAGCond = false;
 
         }
     }
