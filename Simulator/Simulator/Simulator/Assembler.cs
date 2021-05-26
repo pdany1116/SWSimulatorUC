@@ -183,16 +183,16 @@ namespace Simulator
                         case "WAIT":
                             instructionCode = 57358;
                             break;
-                        case "PUSH PC":
+                        case "PUSHPC":
                             instructionCode = 57359;
                             break;
-                        case "POP PC":
+                        case "POPPC":
                             instructionCode = 57360;
                             break;
-                        case "PUSH FLAG":
+                        case "PUSHFLAG":
                             instructionCode = 57361;
                             break;
-                        case "POP FLAG":
+                        case "POPFLAG":
                             instructionCode = 57362;
                             break;
                         default:
@@ -716,7 +716,7 @@ namespace Simulator
                                         }
                                         else
                                         {
-                                            instructionCode = (UInt16)(instructionCode | offset);
+                                            instructionCode = (UInt16)(instructionCode | (ushort)offset);
                                         }
                                         AddToOutput(instructionCode);
                                         //Console.WriteLine(instructionCode);
