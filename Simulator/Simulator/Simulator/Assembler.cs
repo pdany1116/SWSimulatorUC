@@ -671,7 +671,7 @@ namespace Simulator
                                     }
                                     else
                                     {
-                                        instructionCode = (UInt16)(instructionCode | offset);
+                                        instructionCode = (UInt16)(instructionCode | (offset & 0x00FF));
                                     }
                                     AddToOutput(instructionCode);
                                     //Console.WriteLine(instructionCode);
@@ -693,7 +693,7 @@ namespace Simulator
                                     }
                                     else
                                     {
-                                        instructionCode = (UInt16)(instructionCode | offset);
+                                        instructionCode = (UInt16)(instructionCode | (offset & 0x00FF));
                                     }
                                     AddToOutput(instructionCode);
                                     //Console.WriteLine(instructionCode);
@@ -716,7 +716,7 @@ namespace Simulator
                                         }
                                         else
                                         {
-                                            instructionCode = (UInt16)(instructionCode | (ushort)offset);
+                                            instructionCode = (UInt16)(instructionCode | (offset & 0x00FF));
                                         }
                                         AddToOutput(instructionCode);
                                         //Console.WriteLine(instructionCode);

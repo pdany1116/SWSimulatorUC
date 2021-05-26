@@ -45,7 +45,7 @@ namespace Simulator
         public static ushort sourceRegister;
         public static ushort mad;
         public static ushort destinationRegister;
-        public static ushort offset;
+        public static short offset;
 
         //indexes or operands after instruction codes in memory
         public static ushort immediateOperand;
@@ -105,7 +105,7 @@ namespace Simulator
                 instructionClass = 2;
 
                 opcode = (ushort)(instructionCode >> 8);
-                offset = (ushort)(instructionCode & 127);
+                offset = (short)(instructionCode & 255);
             }
             else if( (instructionCode & (7 << 13)) == 57344)
             {
@@ -4608,7 +4608,7 @@ namespace Simulator
                 resetCLE();
 
                 SBUS = IR; //pdIR
-                ALU = offset; //(SBUS & 127)
+                ALU = (ushort)(SBUS & 255); //(SBUS & 255) offset
                 RBUS = ALU; //pdalu
                 T = RBUS;
 
@@ -4616,6 +4616,8 @@ namespace Simulator
                 SSBUS = true;
                 PdALU = true;
                 PmT = true;
+
+                currentImpulse = 2;
             }
             else if(currentImpulse == 2)
             {
@@ -4623,7 +4625,14 @@ namespace Simulator
 
                 DBUS = PC; //pdPC
                 SBUS = T; //pdT
-                ALU = (ushort)(SBUS + DBUS);
+                if (offset > 127)
+                {
+                    ALU = (ushort)(DBUS + (offset - 256));
+                }
+                else
+                {
+                    ALU = (ushort)(DBUS + offset);
+                }
                 RBUS = ALU; //pdalu
                 PC = ALU;
 
@@ -4661,7 +4670,7 @@ namespace Simulator
                 if((FLAG & (1<<2)) == 0)
                 {
                     SBUS = IR; //pdIR
-                    ALU = offset; //(SBUS & 127)
+                    ALU = (ushort)(SBUS & 255); //(SBUS & 255) offset
                     RBUS = ALU; //pdalu
                     T = RBUS;
 
@@ -4669,8 +4678,11 @@ namespace Simulator
                     SSBUS = true;
                     PdALU = true;
                     PmT = true;
+
+                    
                 }
-                
+                currentImpulse = 2;
+
             }
             else if (currentImpulse == 2)
             {
@@ -4680,7 +4692,14 @@ namespace Simulator
                 {
                     DBUS = PC; //pdPC
                     SBUS = T; //pdT
-                    ALU = (ushort)(SBUS + DBUS);
+                    if(offset > 127)
+                    {
+                        ALU = (ushort)(DBUS + (offset - 256));
+                    }
+                    else
+                    {
+                        ALU = (ushort)(DBUS + offset);
+                    }
                     RBUS = ALU; //pdalu
                     PC = ALU;
 
@@ -4718,7 +4737,7 @@ namespace Simulator
                 if ((FLAG & (1 << 2)) == 4)
                 {
                     SBUS = IR; //pdIR
-                    ALU = offset; //(SBUS & 127)
+                    ALU = (ushort)(SBUS & 255); //(SBUS & 255) offset
                     RBUS = ALU; //pdalu
                     T = RBUS;
 
@@ -4726,8 +4745,10 @@ namespace Simulator
                     SSBUS = true;
                     PdALU = true;
                     PmT = true;
-                }
 
+                    
+                }
+                currentImpulse = 2;
             }
             else if (currentImpulse == 2)
             {
@@ -4737,7 +4758,14 @@ namespace Simulator
                 {
                     DBUS = PC; //pdPC
                     SBUS = T; //pdT
-                    ALU = (ushort)(SBUS + DBUS);
+                    if (offset > 127)
+                    {
+                        ALU = (ushort)(DBUS + (offset - 256));
+                    }
+                    else
+                    {
+                        ALU = (ushort)(DBUS + offset);
+                    }
                     RBUS = ALU; //pdalu
                     PC = ALU;
 
@@ -4776,7 +4804,7 @@ namespace Simulator
                 if ((FLAG & (1)) == 0)
                 {
                     SBUS = IR; //pdIR
-                    ALU = offset; //(SBUS & 127)
+                    ALU = (ushort)(SBUS & 255); //(SBUS & 255) offset
                     RBUS = ALU; //pdalu
                     T = RBUS;
 
@@ -4784,8 +4812,11 @@ namespace Simulator
                     SSBUS = true;
                     PdALU = true;
                     PmT = true;
-                }
 
+                   
+
+                }
+                currentImpulse = 2;
             }
             else if (currentImpulse == 2)
             {
@@ -4795,7 +4826,14 @@ namespace Simulator
                 {
                     DBUS = PC; //pdPC
                     SBUS = T; //pdT
-                    ALU = (ushort)(SBUS + DBUS);
+                    if (offset > 127)
+                    {
+                        ALU = (ushort)(DBUS + (offset - 256));
+                    }
+                    else
+                    {
+                        ALU = (ushort)(DBUS + offset);
+                    }
                     RBUS = ALU; //pdalu
                     PC = ALU;
 
@@ -4833,7 +4871,7 @@ namespace Simulator
                 if ((FLAG & (1)) == 1)
                 {
                     SBUS = IR; //pdIR
-                    ALU = offset; //(SBUS & 127)
+                    ALU = (ushort)(SBUS & 255); //(SBUS & 255) offset
                     RBUS = ALU; //pdalu
                     T = RBUS;
 
@@ -4841,7 +4879,10 @@ namespace Simulator
                     SSBUS = true;
                     PdALU = true;
                     PmT = true;
+
+                    
                 }
+                currentImpulse = 2;
 
             }
             else if (currentImpulse == 2)
@@ -4852,7 +4893,14 @@ namespace Simulator
                 {
                     DBUS = PC; //pdPC
                     SBUS = T; //pdT
-                    ALU = (ushort)(SBUS + DBUS);
+                    if (offset > 127)
+                    {
+                        ALU = (ushort)(DBUS + (offset - 256));
+                    }
+                    else
+                    {
+                        ALU = (ushort)(DBUS + offset);
+                    }
                     RBUS = ALU; //pdalu
                     PC = ALU;
 
@@ -4891,7 +4939,7 @@ namespace Simulator
                 if ((FLAG & (1<<1)) == 2)
                 {
                     SBUS = IR; //pdIR
-                    ALU = offset; //(SBUS & 127)
+                    ALU = (ushort)(SBUS & 255); //(SBUS & 255) offset
                     RBUS = ALU; //pdalu
                     T = RBUS;
 
@@ -4899,7 +4947,10 @@ namespace Simulator
                     SSBUS = true;
                     PdALU = true;
                     PmT = true;
+
+                   
                 }
+                currentImpulse = 2;
 
             }
             else if (currentImpulse == 2)
@@ -4910,7 +4961,14 @@ namespace Simulator
                 {
                     DBUS = PC; //pdPC
                     SBUS = T; //pdT
-                    ALU = (ushort)(SBUS + DBUS);
+                    if (offset > 127)
+                    {
+                        ALU = (ushort)(DBUS + (offset - 256));
+                    }
+                    else
+                    {
+                        ALU = (ushort)(DBUS + offset);
+                    }
                     RBUS = ALU; //pdalu
                     PC = ALU;
 
@@ -4948,7 +5006,7 @@ namespace Simulator
                 if ((FLAG & (1<<1)) == 0)
                 {
                     SBUS = IR; //pdIR
-                    ALU = offset; //(SBUS & 127)
+                    ALU = (ushort)(SBUS & 255); //(SBUS & 255) offset
                     RBUS = ALU; //pdalu
                     T = RBUS;
 
@@ -4957,6 +5015,8 @@ namespace Simulator
                     PdALU = true;
                     PmT = true;
                 }
+
+                currentImpulse = 2;
 
             }
             else if (currentImpulse == 2)
@@ -4967,7 +5027,14 @@ namespace Simulator
                 {
                     DBUS = PC; //pdPC
                     SBUS = T; //pdT
-                    ALU = (ushort)(SBUS + DBUS);
+                    if (offset > 127)
+                    {
+                        ALU = (ushort)(DBUS + (offset - 256));
+                    }
+                    else
+                    {
+                        ALU = (ushort)(DBUS + offset);
+                    }
                     RBUS = ALU; //pdalu
                     PC = ALU;
 
@@ -5005,7 +5072,7 @@ namespace Simulator
                 if ((FLAG & (1<<3)) == 8)
                 {
                     SBUS = IR; //pdIR
-                    ALU = offset; //(SBUS & 127)
+                    ALU = (ushort)(SBUS & 255); //(SBUS & 255) offset
                     RBUS = ALU; //pdalu
                     T = RBUS;
 
@@ -5015,6 +5082,7 @@ namespace Simulator
                     PmT = true;
                 }
 
+                currentImpulse = 2;
             }
             else if (currentImpulse == 2)
             {
@@ -5024,7 +5092,14 @@ namespace Simulator
                 {
                     DBUS = PC; //pdPC
                     SBUS = T; //pdT
-                    ALU = (ushort)(SBUS + DBUS);
+                    if (offset > 127)
+                    {
+                        ALU = (ushort)(DBUS + (offset - 256));
+                    }
+                    else
+                    {
+                        ALU = (ushort)(DBUS + offset);
+                    }
                     RBUS = ALU; //pdalu
                     PC = ALU;
 
@@ -5062,7 +5137,7 @@ namespace Simulator
                 if ((FLAG & (1<<3)) == 0)
                 {
                     SBUS = IR; //pdIR
-                    ALU = offset; //(SBUS & 127)
+                    ALU = (ushort)(SBUS & 255); //(SBUS & 255) offset
                     RBUS = ALU; //pdalu
                     T = RBUS;
 
@@ -5071,6 +5146,8 @@ namespace Simulator
                     PdALU = true;
                     PmT = true;
                 }
+
+                currentImpulse = 2;
 
             }
             else if (currentImpulse == 2)
@@ -5081,7 +5158,14 @@ namespace Simulator
                 {
                     DBUS = PC; //pdPC
                     SBUS = T; //pdT
-                    ALU = (ushort)(SBUS + DBUS);
+                    if (offset > 127)
+                    {
+                        ALU = (ushort)(DBUS + (offset - 256));
+                    }
+                    else
+                    {
+                        ALU = (ushort)(DBUS + offset);
+                    }
                     RBUS = ALU; //pdalu
                     PC = ALU;
 
