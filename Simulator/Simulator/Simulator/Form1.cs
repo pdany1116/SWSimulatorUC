@@ -440,7 +440,8 @@ namespace Simulator
                 simulator = new Simulator(binFile);
                 compiled = true;
 
-                
+                thread = new Thread(MemoryDump.buildText);
+                thread.Start();
                 refreshValues();
             }
             else
@@ -448,8 +449,7 @@ namespace Simulator
                 MessageBox.Show("Parsin error!");
             }
 
-            thread = new Thread(MemoryDump.buildText);
-            thread.Start();
+           
         }
 
         private void memoryToolStripMenuItem_Click(object sender, EventArgs e)
