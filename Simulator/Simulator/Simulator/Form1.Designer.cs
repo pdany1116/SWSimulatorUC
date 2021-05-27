@@ -37,6 +37,7 @@ namespace Simulator
             this.runToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.stepToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.runUntilEndToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.memoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label1 = new System.Windows.Forms.Label();
             this.consoleText = new System.Windows.Forms.TextBox();
             this.panelRBUS = new System.Windows.Forms.Panel();
@@ -99,7 +100,6 @@ namespace Simulator
             this.pPdMDR_SBUS = new System.Windows.Forms.Panel();
             this.lRegisters = new System.Windows.Forms.Label();
             this.lRegisterss = new System.Windows.Forms.Label();
-            this.memoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tIVR = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.pPmIVR = new System.Windows.Forms.Panel();
@@ -138,21 +138,21 @@ namespace Simulator
             // loadToolStripMenuItem
             // 
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
-            this.loadToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(102, 22);
             this.loadToolStripMenuItem.Text = "Load";
             this.loadToolStripMenuItem.Click += new System.EventHandler(this.loadToolStripMenuItem_Click);
             // 
             // parseToolStripMenuItem
             // 
             this.parseToolStripMenuItem.Name = "parseToolStripMenuItem";
-            this.parseToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.parseToolStripMenuItem.Size = new System.Drawing.Size(102, 22);
             this.parseToolStripMenuItem.Text = "Parse";
             this.parseToolStripMenuItem.Click += new System.EventHandler(this.parseToolStripMenuItem_Click);
             // 
             // clearToolStripMenuItem
             // 
             this.clearToolStripMenuItem.Name = "clearToolStripMenuItem";
-            this.clearToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.clearToolStripMenuItem.Size = new System.Drawing.Size(102, 22);
             this.clearToolStripMenuItem.Text = "Clear";
             this.clearToolStripMenuItem.Click += new System.EventHandler(this.clearToolStripMenuItem_Click);
             // 
@@ -176,6 +176,13 @@ namespace Simulator
             this.runUntilEndToolStripMenuItem.Size = new System.Drawing.Size(90, 20);
             this.runUntilEndToolStripMenuItem.Text = "Run until end";
             this.runUntilEndToolStripMenuItem.Click += new System.EventHandler(this.runUntilEndToolStripMenuItem_Click);
+            // 
+            // memoryToolStripMenuItem
+            // 
+            this.memoryToolStripMenuItem.Name = "memoryToolStripMenuItem";
+            this.memoryToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
+            this.memoryToolStripMenuItem.Text = "Memory";
+            this.memoryToolStripMenuItem.Click += new System.EventHandler(this.memoryToolStripMenuItem_Click);
             // 
             // label1
             // 
@@ -604,6 +611,7 @@ namespace Simulator
             this.textBox8.Location = new System.Drawing.Point(70, 101);
             this.textBox8.Multiline = true;
             this.textBox8.Name = "textBox8";
+            this.textBox8.ReadOnly = true;
             this.textBox8.Size = new System.Drawing.Size(171, 581);
             this.textBox8.TabIndex = 38;
             this.textBox8.Text = "\r\n\r\n\r\n\r\n\r\n\r\n\r\nBGC";
@@ -707,13 +715,6 @@ namespace Simulator
             this.lRegisterss.Size = new System.Drawing.Size(109, 15);
             this.lRegisterss.TabIndex = 44;
             this.lRegisterss.Text = "No program compiled";
-            // 
-            // memoryToolStripMenuItem
-            // 
-            this.memoryToolStripMenuItem.Name = "memoryToolStripMenuItem";
-            this.memoryToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
-            this.memoryToolStripMenuItem.Text = "Memory";
-            this.memoryToolStripMenuItem.Click += new System.EventHandler(this.memoryToolStripMenuItem_Click);
             // 
             // tIVR
             // 

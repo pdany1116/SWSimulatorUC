@@ -2,11 +2,13 @@
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using System.Threading;
 
 namespace Simulator
 {
     public partial class Form1 : Form
     {
+        Thread thread;
         
         private string asmFile = "";
         private string binFile = "";
@@ -434,20 +436,34 @@ namespace Simulator
 
             if (assembler.ParseAndTransform(asmFile, binFile))
             {
+                
                 simulator = new Simulator(binFile);
                 compiled = true;
+
+                
                 refreshValues();
             }
             else
             {
                 MessageBox.Show("Parsin error!");
             }
+
+            thread = new Thread(MemoryDump.buildText);
+            thread.Start();
         }
 
         private void memoryToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            memoryDump = new MemoryDump();
-            memoryDump.Show();
+            if(thread.ThreadState == 0)
+            {
+                MessageBox.Show("Memory not ready. Try again in 5 seconds!");
+            }
+            else
+            {
+                memoryDump = new MemoryDump();
+                memoryDump.Show();
+            }
+           
         }
     }
 }

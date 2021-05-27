@@ -37,9 +37,11 @@ namespace Simulator
             // textBox1
             // 
             this.textBox1.Location = new System.Drawing.Point(12, 37);
+            this.textBox1.MaxLength = 2000000;
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(810, 401);
+            this.textBox1.ReadOnly = true;
+            this.textBox1.Size = new System.Drawing.Size(614, 401);
             this.textBox1.TabIndex = 0;
             // 
             // contextMenuStrip1
@@ -51,7 +53,7 @@ namespace Simulator
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(834, 450);
+            this.ClientSize = new System.Drawing.Size(638, 450);
             this.Controls.Add(this.textBox1);
             this.Name = "MemoryDump";
             this.Text = "MemoryDump";
