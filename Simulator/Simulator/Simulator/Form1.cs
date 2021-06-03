@@ -8,7 +8,7 @@ namespace Simulator
 {
     public partial class Form1 : Form
     {
-        Thread thread;
+        public static Thread thread;
         
         private string asmFile = "";
         private string binFile = "";
@@ -127,6 +127,7 @@ namespace Simulator
                 
             
             }
+
 
             refreshValues();
 
@@ -440,8 +441,7 @@ namespace Simulator
                 simulator = new Simulator(binFile);
                 compiled = true;
 
-                thread = new Thread(MemoryDump.buildText);
-                thread.Start();
+                
                 refreshValues();
             }
             else
@@ -454,15 +454,15 @@ namespace Simulator
 
         private void memoryToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if(thread.ThreadState == 0)
-            {
-                MessageBox.Show("Memory not ready. Try again in 5 seconds!");
-            }
-            else
-            {
+            //if(thread.ThreadState == 0)
+            //{
+             //   MessageBox.Show("Memory not ready. Try again in 5 seconds!");
+            //}
+           // else
+            //{
                 memoryDump = new MemoryDump();
                 memoryDump.Show();
-            }
+           // }
            
         }
     }

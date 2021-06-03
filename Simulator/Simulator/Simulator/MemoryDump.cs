@@ -16,6 +16,7 @@ namespace Simulator
         public MemoryDump()
         {
             InitializeComponent();
+            
         }
         
         public static void buildText()
@@ -40,9 +41,9 @@ namespace Simulator
         private void MemoryDump_Load(object sender, EventArgs e)
         {
             textBox1.ScrollBars = ScrollBars.Vertical;
-            //textBox1.Text = string.Join(" ", Simulator.Memory.Select(x => x.ToString("X2")));
+            textBox1.Text = string.Join(" ", Simulator.Memory.Select(x => x.ToString("X2")));
 
-            textBox1.Text = text;
+           // textBox1.Text = text;
 
         }
     }

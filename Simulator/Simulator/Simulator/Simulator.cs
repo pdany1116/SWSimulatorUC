@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace Simulator
 {
@@ -11,6 +12,7 @@ namespace Simulator
 
     class Simulator
     {
+        
         public bool compiled = false;
 
         #region memory
@@ -119,8 +121,9 @@ namespace Simulator
 
         public void phase_generator()
         {
-            
-            if(TINT == true && TIF == false && TOF == false && TEX == false)
+           
+
+            if (TINT == true && TIF == false && TOF == false && TEX == false)
             {
                 currentPhase = 4;
                 currentImpulse = 1;
@@ -1531,6 +1534,7 @@ namespace Simulator
                         Memory[10000 + MDR] = (byte)(RBUS >> 8);
                         Memory[10000 + MDR + 1] = (byte)(RBUS); //WR
 
+                      
                         PdT_DBUS = true;
                         DDBUS = true;
                         PdALU = true;

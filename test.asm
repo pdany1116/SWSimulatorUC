@@ -1,11 +1,25 @@
+;eticheta
 START:
 	MOV R7,4
 	CALL ADUNARE
+	
+	MOV R2,24
+	MOV (R2),R1
+	
+	MOV R3,0
+	MOV R4,0
+
+LOOP: 
+	MOV (R4),R3
+	INC R3
+	ADD R4,2
+	CMP R3,9
+	BNE LOOP
 
 HALT
 
 proc ADUNARE
-	
+;returneaza in R1 suma Gauss
 INCEPUT:
 	ADD R1,R7
 	SUB R7,1
@@ -13,3 +27,4 @@ INCEPUT:
 	BNE INCEPUT
 
 	RET
+ENDP ADUNARE
